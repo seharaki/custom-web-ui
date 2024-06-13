@@ -7,6 +7,8 @@ import jwt
 import urllib3
 from streamlit_oauth import OAuth2Component
 
+from urllib import parse, request
+
 logger = logging.getLogger()
 
 # Read the configuration file
@@ -41,11 +43,15 @@ def configure_oauth_component():
     """
     Configure the OAuth2 component for Cognito
     """
-    cognito_domain = OAUTH_CONFIG["CognitoDomain"]
-    authorize_url = f"https://{cognito_domain}/oauth2/authorize"
-    token_url = f"https://{cognito_domain}/oauth2/token"
-    refresh_token_url = f"https://{cognito_domain}/oauth2/token"
-    revoke_token_url = f"https://{cognito_domain}/oauth2/revoke"
+    idp_config = urllib3.request(
+        "GET",
+            f"{OAUTH_CONFIG['CognitoDomain']}/.well-known/openid-configuration"
+    ).json()
+
+    authorize_url = idp_config["authorization_endpoint"]
+    token_url = idp_config["token_endpoint"]
+    refresh_token_url = idp_config["token_endpoint"]
+    revoke_token_url = idp_config.get("revocation_endpoint")
     client_id = OAUTH_CONFIG["ClientId"]
     return OAuth2Component(
         client_id, None, authorize_url, token_url, refresh_token_url, revoke_token_url
@@ -104,7 +110,7 @@ def get_qclient(idc_id_token: str):
     Create the Q client using the identity-aware AWS Session.
     """
     if not AWS_CREDENTIALS or AWS_CREDENTIALS["Expiration"] < datetime.datetime.now(
-        datetime.UTC
+        datetime.timezone.utc
     ):
         assume_role_with_token(idc_id_token)
     session = boto3.Session(
