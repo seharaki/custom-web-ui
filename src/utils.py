@@ -229,3 +229,22 @@ def store_feedback(user_email, conversation_id, parent_message_id, user_message,
         logger.info("Feedback stored successfully")
     except Exception as e:
         logger.error(f"Error storing feedback: {e}")
+
+def store_message_response(user_email, conversation_id, parent_message_id, user_message, response):
+    """
+    Store user message and response in DynamoDB
+    """
+    try:
+        feedback_table.put_item(
+            Item={
+                'UserId': user_email,
+                'ConversationId': conversation_id,
+                'ParentMessageId': parent_message_id,
+                'UserMessage': user_message,
+                'Response': response,
+                'Timestamp': datetime.datetime.utcnow().isoformat()
+            }
+        )
+        logger.info("Message and response stored successfully")
+    except Exception as e:
+        logger.error(f"Error storing message and response: {e}")
