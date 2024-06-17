@@ -124,6 +124,14 @@ else:
                 st.session_state["parentMessageId"] = response["parentMessageId"]
 
             st.session_state.messages.append({"role": "assistant", "content": full_response})
+            # Store message and response in DynamoDB
+            utils.store_message_response(
+                user_email=user_email,
+                conversation_id=st.session_state["conversationId"],
+                parent_message_id=st.session_state["parentMessageId"],
+                user_message=prompt,
+                response=full_response
+            )
             # Enable feedback form
             st.session_state["show_feedback"] = True
             st.session_state["show_feedback_success"] = False  # Hide success message
