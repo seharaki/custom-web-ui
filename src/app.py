@@ -156,7 +156,7 @@ else:
 
                 # Store feedback
                 utils.store_feedback(
-                    user_id=user_email,  # Changed from user_id to user_email
+                    user_email=user_email,  # Changed from user_id to user_email
                     conversation_id=st.session_state["conversationId"],
                     parent_message_id=st.session_state["parentMessageId"],
                     user_message=prompt,
