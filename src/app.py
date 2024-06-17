@@ -110,7 +110,6 @@ else:
         with st.chat_message("user"):
             st.write(prompt)
 
-
     # If the last message is from the user, generate a response from the Q_backend
     if st.session_state.messages[-1]["role"] != "assistant":
         with st.chat_message("assistant"):
