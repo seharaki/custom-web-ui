@@ -139,8 +139,9 @@ else:
             "Please provide feedback on the response:",
             [feedback_type_thumbs_up, feedback_type_thumbs_down]
         )
-
+        st.write(f"Selected feedback type: {feedback_type}")  # Debugging line
         if feedback_type == feedback_type_thumbs_down:
+            st.write("Thumbs Down selected")  # Debugging line
             feedback_reason = st.selectbox(
                 "Please select the reason for your feedback:",
                 ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"]
