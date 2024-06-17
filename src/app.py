@@ -2,7 +2,6 @@ from datetime import datetime, timedelta, timezone
 import jwt
 import streamlit as st
 import utils
-from streamlit_feedback import streamlit_feedback
 
 UTC = timezone.utc
 
@@ -122,13 +121,13 @@ else:
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             # Enable feedback form
             st.session_state["show_feedback"] = True
+            st.session_state["show_feedback_success"] = False  # Hide success message
 
 # Show feedback form after the assistant responds
 if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
 
 if st.session_state["show_feedback"]:
-    st.write("### Please provide feedback:")
     col1, col2 = st.columns([1, 1])
     feedback_type = None
     if col1.button("👍", key="thumbs_up"):
