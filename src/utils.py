@@ -198,3 +198,24 @@ def get_queue_chain(
         result["answer"] = modified_message
 
     return result
+
+def store_feedback(user_id, conversation_id, parent_message_id, user_message, feedback):
+    """
+    Store user feedback in DynamoDB
+    """
+    try:
+        feedback_table.put_item(
+            Item={
+                'UserId': user_id,
+                'ConversationId': conversation_id,
+                'ParentMessageId': parent_message_id,
+                'UserMessage': user_message,
+                'Feedback': feedback,
+                'Timestamp': datetime.datetime.utcnow().isoformat()
+            }
+        )
+        logger.info("Feedback stored successfully")
+    except Exception as e:
+        logger.error(f"Error storing feedback: {e}")
+        
+    return result
