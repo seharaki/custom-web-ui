@@ -11,6 +11,17 @@ from urllib import parse, request
 
 logger = logging.getLogger()
 
+# Add a file handler to write logs to a file
+file_handler = logging.FileHandler('/var/log/app.log')
+file_handler.setLevel(logging.INFO)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, handlers=[
+    logging.FileHandler('/var/log/app.log'),
+    logging.StreamHandler()
+])
+logger = logging.getLogger(__name__)
+
 # Read the configuration file
 APPCONFIG_APP_NAME = os.environ["APPCONFIG_APP_NAME"]
 APPCONFIG_ENV_NAME = os.environ["APPCONFIG_ENV_NAME"]
