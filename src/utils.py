@@ -212,13 +212,10 @@ def get_queue_chain(
     return result
 
 def store_feedback(user_email, conversation_id, parent_message_id, user_message, feedback):
-    """
-    Store user feedback in DynamoDB
-    """
     try:
-        qbusiness_table.put_item(
+        feedback_table.put_item(
             Item={
-                'UserId': user_email,
+                'UserEmail': user_email,
                 'ConversationId': conversation_id,
                 'ParentMessageId': parent_message_id,
                 'UserMessage': user_message,
@@ -231,13 +228,10 @@ def store_feedback(user_email, conversation_id, parent_message_id, user_message,
         logger.error(f"Error storing feedback: {e}")
 
 def store_message_response(user_email, conversation_id, parent_message_id, user_message, response):
-    """
-    Store user message and response in DynamoDB
-    """
     try:
-        qbusiness_table.put_item(
+        feedback_table.put_item(
             Item={
-                'UserId': user_email,
+                'UserEmail': user_email,
                 'ConversationId': conversation_id,
                 'ParentMessageId': parent_message_id,
                 'UserMessage': user_message,

@@ -281,16 +281,20 @@ Resources:
   QBusinessVOA:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Ref QBusinessVOATableName
+      TableName: !Ref FeedbackTableName
       AttributeDefinitions:
         - AttributeName: UserId
           AttributeType: S
         - AttributeName: ConversationId
           AttributeType: S
+        - AttributeName: Timestamp
+          AttributeType: S
       KeySchema:
         - AttributeName: UserId
           KeyType: HASH
         - AttributeName: ConversationId
+          KeyType: RANGE
+        - AttributeName: Timestamp
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5
