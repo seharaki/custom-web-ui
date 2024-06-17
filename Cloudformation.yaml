@@ -48,6 +48,10 @@ Parameters:
     Type: String
     Description: Github branch to deploy the app from.
     Default: "main"
+  FeedbackTableName:
+    Type: String
+    Description: Name of the DynamoDB table to store feedback
+    Default: Feedback
   ExternalFQDN:
     Type: String
     Description: Custom domain name for the application. Leave empty if you want to use the default ALB generated domain name.
