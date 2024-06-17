@@ -31,8 +31,7 @@ def clear_chat_history():
 oauth2 = utils.configure_oauth_component()
 if "token" not in st.session_state:
     # If not, show authorize button
-    redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']
-                              }/component/streamlit_oauth.authorize_button/index.html"
+    redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
     result = oauth2.authorize_button(
         "Click here to login", scope="openid email", pkce="S256", redirect_uri=redirect_uri)
     if result and "token" in result:

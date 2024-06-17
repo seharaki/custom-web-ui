@@ -53,8 +53,7 @@ def retrieve_config_from_agent():
     global IAM_ROLE, REGION, IDC_APPLICATION_ID, AMAZON_Q_APP_ID, OAUTH_CONFIG
     config = urllib3.request(
         "GET",
-        f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{
-            APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}",
+        f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}",
     ).json()
     IAM_ROLE = config["IamRoleArn"]
     REGION = config["Region"]
