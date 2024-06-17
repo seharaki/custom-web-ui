@@ -20,6 +20,31 @@ REGION = None
 IDC_APPLICATION_ID = None
 OAUTH_CONFIG = {}
 
+dynamodb = boto3.resource('dynamodb', region_name=REGION)
+
+FEEDBACK_TABLE_NAME = os.environ.get("FEEDBACK_TABLE_NAME", "Feedback")
+feedback_table = dynamodb.Table(FEEDBACK_TABLE_NAME)
+
+
+def store_feedback(user_id, conversation_id, parent_message_id, user_message, feedback):
+    """
+    Store user feedback in DynamoDB
+    """
+    try:
+        feedback_table.put_item(
+            Item={
+                'UserId': user_id,
+                'ConversationId': conversation_id,
+                'ParentMessageId': parent_message_id,
+                'UserMessage': user_message,
+                'Feedback': feedback,
+                'Timestamp': datetime.datetime.utcnow().isoformat()
+            }
+        )
+        logger.info("Feedback stored successfully")
+    except Exception as e:
+        logger.error(f"Error storing feedback: {e}")
+
 
 def retrieve_config_from_agent():
     """
@@ -28,7 +53,8 @@ def retrieve_config_from_agent():
     global IAM_ROLE, REGION, IDC_APPLICATION_ID, AMAZON_Q_APP_ID, OAUTH_CONFIG
     config = urllib3.request(
         "GET",
-        f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}",
+        f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{
+            APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}",
     ).json()
     IAM_ROLE = config["IamRoleArn"]
     REGION = config["Region"]
@@ -50,6 +76,7 @@ def configure_oauth_component():
     return OAuth2Component(
         client_id, None, authorize_url, token_url, refresh_token_url, revoke_token_url
     )
+
 
 def refresh_iam_oidc_token(refresh_token):
     """
