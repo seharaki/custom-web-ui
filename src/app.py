@@ -144,6 +144,8 @@ else:
         # Function to handle feedback type selection
         def handle_feedback_type():
             st.session_state["feedback_type"] = st.session_state.feedback_radio
+            st.session_state["feedback_reason"] = ""
+            st.session_state["additional_feedback"] = ""
 
         # Function to handle feedback reason selection
         def handle_feedback_reason():
@@ -156,7 +158,7 @@ else:
             on_change=handle_feedback_type
         )
 
-        st.write(f"Selected feedback type: {feedback_type}")  # Debugging line
+        st.write(f"Selected feedback type: {st.session_state['feedback_type']}")  # Debugging line
 
         if st.session_state["feedback_type"] == feedback_type_thumbs_down:
             st.write("Thumbs Down selected")  # Debugging line
@@ -166,7 +168,7 @@ else:
                 key="feedback_selectbox",
                 on_change=handle_feedback_reason
             )
-            st.write(f"Selected feedback reason: {feedback_reason}")  # Debugging line
+            st.write(f"Selected feedback reason: {st.session_state['feedback_reason']}")  # Debugging line
 
             if st.session_state["feedback_reason"] == "Other":
                 additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback")
@@ -193,4 +195,7 @@ else:
                 )
                 st.success("Thank you for your feedback!")
 
-
+                # Clear feedback state after submission
+                st.session_state["feedback_type"] = None
+                st.session_state["feedback_reason"] = ""
+                st.session_state["additional_feedback"] = ""
