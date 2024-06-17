@@ -144,10 +144,10 @@ if st.session_state["show_feedback"]:
             conversation_id=st.session_state["conversationId"],
             parent_message_id=st.session_state["parentMessageId"],
             user_message=st.session_state.user_prompt,  # Pass the stored user prompt
-            feedback={"type": st.session_state["feedback_type"], "reason": feedback_details}
+            feedback={"type": st.session_state["feedback_type"]}
         )
         st.experimental_rerun()
-        
+
     if col2.button("👎", key="thumbs_down"):
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
