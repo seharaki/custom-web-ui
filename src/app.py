@@ -128,7 +128,7 @@ else:
 if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
 
-if st.session_state["show_feedback"]:
+if st.session_state["show_feedback"] and not st.session_state.get("feedback_submitted", False):
     col1, col2, _ = st.columns([1, 1, 3])
     feedback_type = None
     if col1.button("👍", key="thumbs_up"):
