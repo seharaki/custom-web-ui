@@ -133,3 +133,29 @@ else:
             feedback_type="thumbs",
             optional_text_label="[Optional] Please provide an explanation",
         )
+
+        if feedback == "thumbs_down":
+            feedback_options = [
+                "Not Relevant/Off Topic",
+                "Not Accurate",
+                "Not Enough Information",
+                "Other"
+            ]
+            selected_option = st.radio(
+                "Please select the reason for your feedback:",
+                feedback_options
+            )
+            if selected_option == "Other":
+                custom_feedback = st.text_area("Please provide additional feedback:")
+            else:
+                custom_feedback = selected_option
+
+            if st.button("Submit Feedback"):
+                utils.store_feedback(
+                    user_id=user_email,
+                    conversation_id=st.session_state["conversationId"],
+                    parent_message_id=st.session_state["parentMessageId"],
+                    user_message=prompt,
+                    feedback=custom_feedback
+                )
+                st.success("Thank you for your feedback!")
