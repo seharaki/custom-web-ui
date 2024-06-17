@@ -131,7 +131,7 @@ else:
         st.session_state.messages.append({"role": "assistant", "content": full_response})
         # Initialize feedback state
         if "feedback_type" not in st.session_state:
-            st.session_state["feedback_type"] = None
+            st.session_state["feedback_type"] = ""
         if "feedback_reason" not in st.session_state:
             st.session_state["feedback_reason"] = ""
         if "additional_feedback" not in st.session_state:
@@ -143,14 +143,15 @@ else:
 
         # Function to handle feedback type selection
         def handle_feedback_type():
-            st.session_state["feedback_type"] = st.session_state.feedback_radio
+            st.session_state["feedback_type"] = st.session_state["feedback_radio"]
             st.session_state["feedback_reason"] = ""
             st.session_state["additional_feedback"] = ""
 
         # Function to handle feedback reason selection
         def handle_feedback_reason():
-            st.session_state["feedback_reason"] = st.session_state.feedback_selectbox
+            st.session_state["feedback_reason"] = st.session_state["feedback_selectbox"]
 
+        # Radio button for feedback type
         feedback_type = st.radio(
             "Please provide feedback on the response:",
             [feedback_type_thumbs_up, feedback_type_thumbs_down],
@@ -160,6 +161,7 @@ else:
 
         st.write(f"Selected feedback type: {st.session_state['feedback_type']}")  # Debugging line
 
+        # Show feedback reason options if Thumbs Down is selected
         if st.session_state["feedback_type"] == feedback_type_thumbs_down:
             st.write("Thumbs Down selected")  # Debugging line
             feedback_reason = st.selectbox(
@@ -171,10 +173,11 @@ else:
             st.write(f"Selected feedback reason: {st.session_state['feedback_reason']}")  # Debugging line
 
             if st.session_state["feedback_reason"] == "Other":
-                additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback")
+                additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback_input")
                 st.write(f"Additional feedback: {additional_feedback}")  # Debugging line
                 st.session_state["additional_feedback"] = additional_feedback
 
+        # Submit feedback button
         if st.button("Submit Feedback"):
             st.write("Submit Feedback button clicked")  # Debugging line
             if st.session_state["feedback_type"] == feedback_type_thumbs_down and st.session_state["feedback_reason"] == "Other" and not st.session_state["additional_feedback"]:
@@ -196,6 +199,6 @@ else:
                 st.success("Thank you for your feedback!")
 
                 # Clear feedback state after submission
-                st.session_state["feedback_type"] = None
+                st.session_state["feedback_type"] = ""
                 st.session_state["feedback_reason"] = ""
                 st.session_state["additional_feedback"] = ""
