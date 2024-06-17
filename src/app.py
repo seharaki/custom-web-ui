@@ -42,7 +42,7 @@ def clear_chat_history():
 oauth2 = utils.configure_oauth_component()
 if "token" not in st.session_state:
     redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
-    result = oauth2.authorize_button("Click here to login", scope="openid email", pkce="S256", redirect_uri=redirect_uri)
+    result = oauth2.authorize_button("Start Chatting", scope="openid email", pkce="S256", redirect_uri=redirect_uri)
     if result and "token" in result:
         st.session_state.token = result.get("token")
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(st.session_state.token["id_token"])
@@ -52,12 +52,6 @@ else:
     token = st.session_state.token
     refresh_token = token.get("refresh_token")
     user_email = jwt.decode(token["id_token"], options={"verify_signature": False})["email"]
-    if st.button("Refresh Cognito Token"):
-        token = oauth2.refresh_token(token, force=True)
-        if token.get("refresh_token"):
-            token["refresh_token"] = refresh_token
-        st.session_state.token = token
-        st.rerun()
 
     if "idc_jwt_token" not in st.session_state:
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
