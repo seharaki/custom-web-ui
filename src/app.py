@@ -129,32 +129,26 @@ else:
 
 
         st.session_state.messages.append({"role": "assistant", "content": full_response})
-        feedback = streamlit_feedback(
-            feedback_type="thumbs",
-            optional_text_label="[Optional] Please provide an explanation",
+        feedback_type = st.radio(
+            "Please provide feedback on the response:",
+            ["Thumbs Up", "Thumbs Down"]
         )
-        if feedback == "thumbs_down":
-            feedback_options = [
-                "Not Relevant/Off Topic",
-                "Not Accurate",
-                "Not Enough Information",
-                "Other"
-            ]
-            selected_option = st.radio(
-                "Please select the reason for your feedback:",
-                feedback_options
-            )
-            if selected_option == "Other":
-                custom_feedback = st.text_area("Please provide additional feedback:")
-            else:
-                custom_feedback = selected_option
 
-            if st.button("Submit Feedback"):
-                utils.store_feedback(
-                    user_id=user_email,
-                    conversation_id=st.session_state["conversationId"],
-                    parent_message_id=st.session_state["parentMessageId"],
-                    user_message=prompt,
-                    feedback=custom_feedback
-                )
-                st.success("Thank you for your feedback!")
+        feedback_reason = ""
+        if feedback_type == "Thumbs Down":
+            feedback_reason = st.selectbox(
+                "Please select the reason for your feedback:",
+                ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"]
+            )
+            if feedback_reason == "Other":
+                feedback_reason = st.text_input("Please provide additional feedback:")
+
+        if st.button("Submit Feedback"):
+            utils.store_feedback(
+                user_id=user_email,
+                conversation_id=st.session_state["conversationId"],
+                parent_message_id=st.session_state["parentMessageId"],
+                user_message=prompt,
+                feedback={"type": feedback_type, "reason": feedback_reason},
+            )
+            st.success("Thank you for your feedback!")
