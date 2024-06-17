@@ -34,6 +34,7 @@ IDC_APPLICATION_ID = None
 OAUTH_CONFIG = {}
 
 #DyanmoDb Configuration
+#TODO Pull the REGION Dynamically
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
 FEEDBACK_TABLE_NAME = os.environ.get("FEEDBACK_TABLE_NAME", "Feedback")

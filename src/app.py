@@ -175,8 +175,8 @@ if st.session_state["show_feedback"]:
                 st.session_state["feedback_reason"] = ""
                 st.session_state["additional_feedback"] = ""
                 st.session_state["show_feedback_success"] = True  # Show success message
+                st.experimental_rerun()  # Force rerun to update the state immediately
 
 # Display success message if feedback was submitted
 if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
     st.success("Thank you for your feedback!")
-    st.session_state["show_feedback_success"] = False  # Reset success message state after displaying it
