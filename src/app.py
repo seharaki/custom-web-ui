@@ -133,7 +133,7 @@ else:
             )
             st.session_state["show_feedback"] = True
             st.session_state["show_feedback_success"] = False
-            st.warning(safety_message)
+            st.warning(safety_message, font_size=8)
 
 if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
