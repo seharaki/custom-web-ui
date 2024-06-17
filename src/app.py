@@ -128,7 +128,7 @@ if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
 
 if st.session_state["show_feedback"]:
-    col1, col2 = st.columns([1, 1])
+    col1, col2, _ = st.columns([1, 1, 3])
     feedback_type = None
     if col1.button("👍", key="thumbs_up"):
         feedback_type = "👍 Thumbs Up"
@@ -136,6 +136,8 @@ if st.session_state["show_feedback"]:
     if col2.button("👎", key="thumbs_down"):
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
+
+    additional_feedback = ""
 
     if st.session_state.get("feedback_type") == "👎 Thumbs Down":
         feedback_reason = st.selectbox(
@@ -160,17 +162,16 @@ if st.session_state["show_feedback"]:
                     conversation_id=st.session_state["conversationId"],
                     parent_message_id=st.session_state["parentMessageId"],
                     user_message=prompt,
-                    feedback={"type": feedback_type, "reason": feedback_details}
+                    feedback={"type": st.session_state["feedback_type"], "reason": feedback_details}
                 )
-                st.success("Thank you for your feedback!")
-                st.session_state["show_feedback_success"] = True  # Show success message
-
                 # Clear feedback state after submission
                 st.session_state["show_feedback"] = False
                 st.session_state["feedback_type"] = ""
                 st.session_state["feedback_reason"] = ""
                 st.session_state["additional_feedback"] = ""
+                st.session_state["show_feedback_success"] = True  # Show success message
 
 # Display success message if feedback was submitted
 if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
     st.success("Thank you for your feedback!")
+    st.session_state["show_feedback_success"] = False  # Reset success message state after displaying it
