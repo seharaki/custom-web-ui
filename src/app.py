@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 import streamlit as st
 import utils
+from streamlit_feedback import streamlit_feedback
 
 UTC = timezone.utc
 
@@ -97,7 +98,6 @@ else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.write(prompt)
-        st.session_state["show_feedback"] = False  # Hide feedback form when a new message is sent
 
     # If the last message is from the user, generate a response from the Q_backend
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
@@ -161,14 +161,10 @@ if st.session_state["show_feedback"]:
                 user_message=prompt,
                 feedback={"type": feedback_type, "reason": feedback_details}
             )
-            st.session_state["show_feedback_success"] = True  # Show success message
+            st.success("Thank you for your feedback!")
 
             # Clear feedback state after submission
             st.session_state["show_feedback"] = False
             st.session_state["feedback_type"] = ""
             st.session_state["feedback_reason"] = ""
             st.session_state["additional_feedback"] = ""
-
-# Display success message if feedback was submitted
-if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
-    st.success("Thank you for your feedback!")
