@@ -128,7 +128,7 @@ if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
 
 if st.session_state["show_feedback"]:
-    col1, col2 = st.columns([1, 1])
+    col1, col2, _ = st.columns([1, 1, 3])
     feedback_type = None
     if col1.button("👍", key="thumbs_up"):
         feedback_type = "👍 Thumbs Up"
