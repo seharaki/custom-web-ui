@@ -134,9 +134,10 @@ else:
         feedback_type_thumbs_down = "👎 Thumbs Down"
         feedback_reason = ""
         additional_feedback = ""
+
         feedback_type = st.radio(
             "Please provide feedback on the response:",
-                [feedback_type_thumbs_up, feedback_type_thumbs_down]
+            [feedback_type_thumbs_up, feedback_type_thumbs_down]
         )
 
         if feedback_type == feedback_type_thumbs_down:
@@ -148,7 +149,7 @@ else:
                 additional_feedback = st.text_input("Please provide additional feedback:")
 
         if st.button("Submit Feedback"):
-            if feedback_type == "Thumbs Down" and feedback_reason == "Other" and not additional_feedback:
+            if feedback_type == feedback_type_thumbs_down and feedback_reason == "Other" and not additional_feedback:
                 st.warning("Please provide additional feedback for 'Other'.")
             else:
                 feedback_details = feedback_reason
@@ -157,11 +158,12 @@ else:
 
                 # Store feedback
                 utils.store_feedback(
-                    user_email=user_email,  # Changed from user_id to user_email
+                    user_email=user_email,
                     conversation_id=st.session_state["conversationId"],
                     parent_message_id=st.session_state["parentMessageId"],
                     user_message=prompt,
                     feedback={"type": feedback_type, "reason": feedback_details}
                 )
                 st.success("Thank you for your feedback!")
+
 
