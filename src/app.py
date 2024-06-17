@@ -168,3 +168,4 @@ if st.session_state["show_feedback"]:
             st.session_state["feedback_type"] = ""
             st.session_state["feedback_reason"] = ""
             st.session_state["additional_feedback"] = ""
+            st.experimental_rerun()  # Rerun to refresh the UI and hide feedback form
