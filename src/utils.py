@@ -37,7 +37,7 @@ OAUTH_CONFIG = {}
 #TODO Pull the REGION Dynamically
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
-Q_TABLE_NAME = os.environ.get("Q_TABLE_NAME", "QBusinessVOA")
+Q_TABLE_NAME = os.environ.get("Q_TABLE_NAME", "QBusinessAppVOA")
 qbusiness_table = dynamodb.Table(Q_TABLE_NAME)
 
 def retrieve_config_from_agent():

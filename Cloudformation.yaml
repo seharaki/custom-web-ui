@@ -48,10 +48,10 @@ Parameters:
     Type: String
     Description: Github branch to deploy the app from.
     Default: "main"
-  QBusinessVOATableName:
+  QBusinessAppVOATableName:
     Type: String
-    Description: Name of the DynamoDB table to store QBusinessVOA
-    Default: QBusinessVOA
+    Description: Name of the DynamoDB table to store conversations and feedback.
+    Default: QBusinessAppVOA
   ExternalFQDN:
     Type: String
     Description: Custom domain name for the application. Leave empty if you want to use the default ALB generated domain name.
@@ -205,7 +205,7 @@ Resources:
               - "dynamodb:DeleteItem"
               - "dynamodb:Scan"
             Resource:
-              - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${QBusinessVOATableName}"
+              - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${QBusinessAppVOATableName}"
 
   AppConfig:
     Type: AWS::AppConfig::Application
@@ -278,22 +278,18 @@ Resources:
       ReplicateTo: "NONE"
       GrowthType: "LINEAR"
 
-  QBusinessVOA:
+  QBusinessAppVOA:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Ref FeedbackTableName
+      TableName: !Ref QBusinessAppVOATableName
       AttributeDefinitions:
         - AttributeName: UserId
-          AttributeType: S
-        - AttributeName: ConversationId
           AttributeType: S
         - AttributeName: Timestamp
           AttributeType: S
       KeySchema:
         - AttributeName: UserId
           KeyType: HASH
-        - AttributeName: ConversationId
-          KeyType: RANGE
         - AttributeName: Timestamp
           KeyType: RANGE
       ProvisionedThroughput:
