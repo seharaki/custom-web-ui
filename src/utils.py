@@ -217,5 +217,3 @@ def store_feedback(user_id, conversation_id, parent_message_id, user_message, fe
         logger.info("Feedback stored successfully")
     except Exception as e:
         logger.error(f"Error storing feedback: {e}")
-        
-    return result
