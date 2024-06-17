@@ -129,26 +129,38 @@ else:
 
 
         st.session_state.messages.append({"role": "assistant", "content": full_response})
-        feedback_type = st.radio(
-            "Please provide feedback on the response:",
-            ["Thumbs Up", "Thumbs Down"]
+# Feedback section
+feedback_type = st.radio(
+    "Please provide feedback on the response:",
+    ["Thumbs Up", "Thumbs Down"]
+)
+
+feedback_reason = ""
+additional_feedback = ""
+
+if feedback_type == "Thumbs Down":
+    feedback_reason = st.selectbox(
+        "Please select the reason for your feedback:",
+        ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"]
+    )
+    if feedback_reason == "Other":
+        additional_feedback = st.text_input("Please provide additional feedback:")
+
+if st.button("Submit Feedback"):
+    if feedback_type == "Thumbs Down" and feedback_reason == "Other" and not additional_feedback:
+        st.warning("Please provide additional feedback for 'Other'.")
+    else:
+        feedback_details = feedback_reason
+        if additional_feedback:
+            feedback_details = additional_feedback
+
+        # Store feedback
+        utils.store_feedback(
+            user_id=user_email,  # Changed from user_id to user_email
+            conversation_id=st.session_state["conversationId"],
+            parent_message_id=st.session_state["parentMessageId"],
+            user_message=prompt,
+            feedback={"type": feedback_type, "reason": feedback_details}
         )
+        st.success("Thank you for your feedback!")
 
-        feedback_reason = ""
-        if feedback_type == "Thumbs Down":
-            feedback_reason = st.selectbox(
-                "Please select the reason for your feedback:",
-                ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"]
-            )
-            if feedback_reason == "Other":
-                feedback_reason = st.text_input("Please provide additional feedback:")
-
-        if st.button("Submit Feedback"):
-            utils.store_feedback(
-                user_id=user_email,
-                conversation_id=st.session_state["conversationId"],
-                parent_message_id=st.session_state["parentMessageId"],
-                user_message=prompt,
-                feedback={"type": feedback_type, "reason": feedback_reason},
-            )
-            st.success("Thank you for your feedback!")
