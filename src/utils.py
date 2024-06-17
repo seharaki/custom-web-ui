@@ -18,7 +18,8 @@ APPCONFIG_CONF_NAME = os.environ["APPCONFIG_CONF_NAME"]
 AWS_CREDENTIALS = {}
 AMAZON_Q_APP_ID = None
 IAM_ROLE = None
-REGION = None
+#TODO Update Region in AppConfig
+REGION = 'us-east-1'
 IDC_APPLICATION_ID = None
 OAUTH_CONFIG = {}
 
