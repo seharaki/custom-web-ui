@@ -129,76 +129,77 @@ else:
 
 
         st.session_state.messages.append({"role": "assistant", "content": full_response})
-        # Initialize feedback state
-        if "feedback_type" not in st.session_state:
-            st.session_state["feedback_type"] = ""
-        if "feedback_reason" not in st.session_state:
-            st.session_state["feedback_reason"] = ""
-        if "additional_feedback" not in st.session_state:
-            st.session_state["additional_feedback"] = ""
+# Initialize feedback state
+if "show_feedback" not in st.session_state:
+    st.session_state["show_feedback"] = False
 
-        # Feedback section
-        feedback_type_thumbs_up = "👍 Thumbs Up"
-        feedback_type_thumbs_down = "👎 Thumbs Down"
+# Show feedback form after the assistant responds
+if st.session_state["show_feedback"]:
+    feedback_type = st.radio(
+        "Please provide feedback on the response:",
+        ["👍 Thumbs Up", "👎 Thumbs Down"]
+    )
 
-        # Function to handle feedback type selection
-        def handle_feedback_type():
-            st.session_state["feedback_type"] = st.session_state["feedback_radio"]
-            st.session_state["feedback_reason"] = ""
-            st.session_state["additional_feedback"] = ""
+    feedback_reason = ""
+    additional_feedback = ""
 
-        # Function to handle feedback reason selection
-        def handle_feedback_reason():
-            st.session_state["feedback_reason"] = st.session_state["feedback_selectbox"]
-
-        # Radio button for feedback type
-        feedback_type = st.radio(
-            "Please provide feedback on the response:",
-            [feedback_type_thumbs_up, feedback_type_thumbs_down],
-            key="feedback_radio",
-            on_change=handle_feedback_type
+    if feedback_type == "👎 Thumbs Down":
+        feedback_reason = st.selectbox(
+            "Please select the reason for your feedback:",
+            ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"]
         )
+        if feedback_reason == "Other":
+            additional_feedback = st.text_input("Please provide additional feedback:")
 
-        st.write(f"Selected feedback type: {st.session_state['feedback_type']}")  # Debugging line
+    if st.button("Submit Feedback"):
+        if feedback_type == "👎 Thumbs Down" and feedback_reason == "Other" and not additional_feedback:
+            st.warning("Please provide additional feedback for 'Other'.")
+        else:
+            feedback_details = feedback_reason
+            if additional_feedback:
+                feedback_details = additional_feedback
 
-        # Show feedback reason options if Thumbs Down is selected
-        if st.session_state["feedback_type"] == feedback_type_thumbs_down:
-            st.write("Thumbs Down selected")  # Debugging line
-            feedback_reason = st.selectbox(
-                "Please select the reason for your feedback:",
-                ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"],
-                key="feedback_selectbox",
-                on_change=handle_feedback_reason
+            # Store feedback
+            utils.store_feedback(
+                user_email=user_email,
+                conversation_id=st.session_state["conversationId"],
+                parent_message_id=st.session_state["parentMessageId"],
+                user_message=prompt,
+                feedback={"type": feedback_type, "reason": feedback_details}
             )
-            st.write(f"Selected feedback reason: {st.session_state['feedback_reason']}")  # Debugging line
+            st.success("Thank you for your feedback!")
 
-            if st.session_state["feedback_reason"] == "Other":
-                additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback_input")
-                st.write(f"Additional feedback: {additional_feedback}")  # Debugging line
-                st.session_state["additional_feedback"] = additional_feedback
+            # Clear feedback state after submission
+            st.session_state["show_feedback"] = False
+            st.session_state["feedback_type"] = ""
+            st.session_state["feedback_reason"] = ""
+            st.session_state["additional_feedback"] = ""
 
-        # Submit feedback button
-        if st.button("Submit Feedback"):
-            st.write("Submit Feedback button clicked")  # Debugging line
-            if st.session_state["feedback_type"] == feedback_type_thumbs_down and st.session_state["feedback_reason"] == "Other" and not st.session_state["additional_feedback"]:
-                st.warning("Please provide additional feedback for 'Other'.")
+# User-provided prompt
+if prompt := st.chat_input():
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.write(prompt)
+
+# If the last message is from the user, generate a response from the Q_backend
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            placeholder = st.empty()
+            response = utils.get_queue_chain(
+                prompt,
+                st.session_state["conversationId"],
+                st.session_state["parentMessageId"],
+                st.session_state["idc_jwt_token"]["idToken"]
+            )
+            if "references" in response:
+                full_response = f"""{response["answer"]}\n\n---\n{response["references"]}"""
             else:
-                feedback_details = st.session_state["feedback_reason"]
-                if st.session_state["additional_feedback"]:
-                    feedback_details = st.session_state["additional_feedback"]
+                full_response = f"""{response["answer"]}\n\n---\nNo sources"""
+            placeholder.markdown(full_response)
+            st.session_state["conversationId"] = response["conversationId"]
+            st.session_state["parentMessageId"] = response["parentMessageId"]
 
-                st.write("Storing feedback...")  # Debugging line
-                # Store feedback
-                utils.store_feedback(
-                    user_email=user_email,
-                    conversation_id=st.session_state["conversationId"],
-                    parent_message_id=st.session_state["parentMessageId"],
-                    user_message=prompt,
-                    feedback={"type": st.session_state["feedback_type"], "reason": feedback_details}
-                )
-                st.success("Thank you for your feedback!")
-
-                # Clear feedback state after submission
-                st.session_state["feedback_type"] = ""
-                st.session_state["feedback_reason"] = ""
-                st.session_state["additional_feedback"] = ""
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
+        # Enable feedback form
+        st.session_state["show_feedback"] = True
