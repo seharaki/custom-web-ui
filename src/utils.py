@@ -199,14 +199,14 @@ def get_queue_chain(
 
     return result
 
-def store_feedback(user_id, conversation_id, parent_message_id, user_message, feedback):
+def store_feedback(user_email, conversation_id, parent_message_id, user_message, feedback):
     """
     Store user feedback in DynamoDB
     """
     try:
         feedback_table.put_item(
             Item={
-                'UserId': user_id,
+                'UserEmail': user_email,
                 'ConversationId': conversation_id,
                 'ParentMessageId': parent_message_id,
                 'UserMessage': user_message,

@@ -1,18 +1,16 @@
 from datetime import datetime, timedelta, timezone
-
 import jwt
-import jwt.algorithms
-import streamlit as st  #all streamlit commands will be available through the "st" alias
+import streamlit as st
 import utils
 from streamlit_feedback import streamlit_feedback
 
-UTC=timezone.utc
+UTC = timezone.utc
 
 # Init configuration
 utils.retrieve_config_from_agent()
 
-st.set_page_config(page_title="Amazon Q Business Custom UI") #HTML title
-st.title("Amazon Q Business Custom UI") #page title
+st.set_page_config(page_title="Amazon Q Business Custom UI")
+st.title("Amazon Q Business Custom UI")
 
 # Define a function to clear the chat history
 def clear_chat_history():
@@ -29,46 +27,40 @@ oauth2 = utils.configure_oauth_component()
 if "token" not in st.session_state:
     # If not, show authorize button
     redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
-    result = oauth2.authorize_button("Click here to login",scope="openid email", pkce="S256", redirect_uri=redirect_uri)
+    result = oauth2.authorize_button("Click here to login", scope="openid email", pkce="S256", redirect_uri=redirect_uri)
     if result and "token" in result:
         # If authorization successful, save token in session state
         st.session_state.token = result.get("token")
         # Retrieve the Identity Center token
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(st.session_state.token["id_token"])
-        st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + \
-            timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
+        st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
         st.rerun()
 else:
     token = st.session_state["token"]
-    refresh_token = token.get("refresh_token") # saving the long lived refresh_token
+    refresh_token = token.get("refresh_token")  # saving the long lived refresh_token
     user_email = jwt.decode(token["id_token"], options={"verify_signature": False})["email"]
-    if st.button("Refresh Cognito Token") :
+    if st.button("Refresh Cognito Token"):
         # If refresh token button is clicked or the token is expired, refresh the token
         token = oauth2.refresh_token(token, force=True)
         # Put the refresh token in the session state as it is not returned by Cognito
         if token.get("refresh_token"):
             token["refresh_token"] = refresh_token
         # Retrieve the Identity Center token
-
         st.session_state.token = token
         st.rerun()
 
     if "idc_jwt_token" not in st.session_state:
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
-        st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(UTC) + \
-            timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
+        st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
     elif st.session_state["idc_jwt_token"]["expires_at"] < datetime.now(UTC):
         # If the Identity Center token is expired, refresh the Identity Center token
         try:
-            st.session_state["idc_jwt_token"] = utils.refresh_iam_oidc_token(
-                st.session_state["idc_jwt_token"]["refreshToken"]
-                )
-            st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(UTC) + \
-                timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
+            st.session_state["idc_jwt_token"] = utils.refresh_iam_oidc_token(st.session_state["idc_jwt_token"]["refreshToken"])
+            st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
         except Exception as e:
             st.error(f"Error refreshing Identity Center token: {e}. Please reload the page.")
 
-    col1, col2 = st.columns([1,1])
+    col1, col2 = st.columns([1, 1])
 
     with col1:
         st.write("Welcome: ", user_email)
@@ -97,12 +89,10 @@ else:
     if "input" not in st.session_state:
         st.session_state.input = ""
 
-
     # Display the chat messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
-
 
     # User-provided prompt
     if prompt := st.chat_input():
@@ -110,13 +100,12 @@ else:
         with st.chat_message("user"):
             st.write(prompt)
 
-
     # If the last message is from the user, generate a response from the Q_backend
     if st.session_state.messages[-1]["role"] != "assistant":
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 placeholder = st.empty()
-                response = utils.get_queue_chain(prompt,st.session_state["conversationId"],
+                response = utils.get_queue_chain(prompt, st.session_state["conversationId"],
                                                  st.session_state["parentMessageId"],
                                                  st.session_state["idc_jwt_token"]["idToken"])
                 if "references" in response:
@@ -127,40 +116,39 @@ else:
                 st.session_state["conversationId"] = response["conversationId"]
                 st.session_state["parentMessageId"] = response["parentMessageId"]
 
-
         st.session_state.messages.append({"role": "assistant", "content": full_response})
-# Feedback section
-feedback_type = st.radio(
-    "Please provide feedback on the response:",
-    ["Thumbs Up", "Thumbs Down"]
-)
 
-feedback_reason = ""
-additional_feedback = ""
-
-if feedback_type == "Thumbs Down":
-    feedback_reason = st.selectbox(
-        "Please select the reason for your feedback:",
-        ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"]
-    )
-    if feedback_reason == "Other":
-        additional_feedback = st.text_input("Please provide additional feedback:")
-
-if st.button("Submit Feedback"):
-    if feedback_type == "Thumbs Down" and feedback_reason == "Other" and not additional_feedback:
-        st.warning("Please provide additional feedback for 'Other'.")
-    else:
-        feedback_details = feedback_reason
-        if additional_feedback:
-            feedback_details = additional_feedback
-
-        # Store feedback
-        utils.store_feedback(
-            user_id=user_email,  # Changed from user_id to user_email
-            conversation_id=st.session_state["conversationId"],
-            parent_message_id=st.session_state["parentMessageId"],
-            user_message=prompt,
-            feedback={"type": feedback_type, "reason": feedback_details}
+        # Show feedback form after the assistant responds
+        feedback_type = st.radio(
+            "Please provide feedback on the response:",
+            ["Thumbs Up", "Thumbs Down"]
         )
-        st.success("Thank you for your feedback!")
 
+        feedback_reason = ""
+        additional_feedback = ""
+
+        if feedback_type == "Thumbs Down":
+            feedback_reason = st.selectbox(
+                "Please select the reason for your feedback:",
+                ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"]
+            )
+            if feedback_reason == "Other":
+                additional_feedback = st.text_input("Please provide additional feedback:")
+
+        if st.button("Submit Feedback"):
+            if feedback_type == "Thumbs Down" and feedback_reason == "Other" and not additional_feedback:
+                st.warning("Please provide additional feedback for 'Other'.")
+            else:
+                feedback_details = feedback_reason
+                if additional_feedback:
+                    feedback_details = additional_feedback
+
+                # Store feedback
+                utils.store_feedback(
+                    user_id=user_email,  # Changed from user_id to user_email
+                    conversation_id=st.session_state["conversationId"],
+                    parent_message_id=st.session_state["parentMessageId"],
+                    user_message=prompt,
+                    feedback={"type": feedback_type, "reason": feedback_details}
+                )
+                st.success("Thank you for your feedback!")
