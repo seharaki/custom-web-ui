@@ -98,6 +98,7 @@ else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.write(prompt)
+        st.session_state["show_feedback"] = False  # Hide feedback form when a new message is sent
 
     # If the last message is from the user, generate a response from the Q_backend
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
@@ -127,16 +128,17 @@ if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
 
 if st.session_state["show_feedback"]:
-    feedback_type = st.radio(
-        "Please provide feedback on the response:",
-        ["👍 Thumbs Up", "👎 Thumbs Down"],
-        key="feedback_radio"
-    )
+    st.write("### Please provide feedback:")
+    col1, col2 = st.columns([1, 1])
+    feedback_type = None
+    if col1.button("👍", key="thumbs_up"):
+        feedback_type = "👍 Thumbs Up"
+        st.session_state["feedback_type"] = feedback_type
+    if col2.button("👎", key="thumbs_down"):
+        feedback_type = "👎 Thumbs Down"
+        st.session_state["feedback_type"] = feedback_type
 
-    feedback_reason = ""
-    additional_feedback = ""
-
-    if feedback_type == "👎 Thumbs Down":
+    if st.session_state.get("feedback_type") == "👎 Thumbs Down":
         feedback_reason = st.selectbox(
             "Please select the reason for your feedback:",
             ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"],
@@ -145,26 +147,31 @@ if st.session_state["show_feedback"]:
         if feedback_reason == "Other":
             additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback_input")
 
-    if st.button("Submit Feedback", key="submit_feedback_button"):
-        if feedback_type == "👎 Thumbs Down" and feedback_reason == "Other" and not additional_feedback:
-            st.warning("Please provide additional feedback for 'Other'.")
-        else:
-            feedback_details = feedback_reason
-            if additional_feedback:
-                feedback_details = additional_feedback
+        if st.button("Submit Feedback", key="submit_feedback_button"):
+            if feedback_reason == "Other" and not additional_feedback:
+                st.warning("Please provide additional feedback for 'Other'.")
+            else:
+                feedback_details = feedback_reason
+                if additional_feedback:
+                    feedback_details = additional_feedback
 
-            # Store feedback
-            utils.store_feedback(
-                user_email=user_email,
-                conversation_id=st.session_state["conversationId"],
-                parent_message_id=st.session_state["parentMessageId"],
-                user_message=prompt,
-                feedback={"type": feedback_type, "reason": feedback_details}
-            )
-            st.success("Thank you for your feedback!")
+                # Store feedback
+                utils.store_feedback(
+                    user_email=user_email,
+                    conversation_id=st.session_state["conversationId"],
+                    parent_message_id=st.session_state["parentMessageId"],
+                    user_message=prompt,
+                    feedback={"type": feedback_type, "reason": feedback_details}
+                )
+                st.success("Thank you for your feedback!")
+                st.session_state["show_feedback_success"] = True  # Show success message
 
-            # Clear feedback state after submission
-            st.session_state["show_feedback"] = False
-            st.session_state["feedback_type"] = ""
-            st.session_state["feedback_reason"] = ""
-            st.session_state["additional_feedback"] = ""
+                # Clear feedback state after submission
+                st.session_state["show_feedback"] = False
+                st.session_state["feedback_type"] = ""
+                st.session_state["feedback_reason"] = ""
+                st.session_state["additional_feedback"] = ""
+
+# Display success message if feedback was submitted
+if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
+    st.success("Thank you for your feedback!")
