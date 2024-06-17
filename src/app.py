@@ -59,7 +59,7 @@ else:
         except Exception as e:
             st.error(f"Error refreshing Identity Center token: {e}. Please reload the page.")
 
-    col1, col2 = st.columns([1, 1])
+    col1, col2 = st.columns([0.25, 0.25])
 
     with col1:
         st.write("Welcome: ", user_email)
