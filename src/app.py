@@ -10,6 +10,10 @@ UTC=timezone.utc
 
 # Init configuration
 utils.retrieve_config_from_agent()
+dynamodb = boto3.resource('dynamodb', region_name=REGION)
+
+FEEDBACK_TABLE_NAME = os.environ.get("FEEDBACK_TABLE_NAME", "Feedback")
+feedback_table = dynamodb.Table(FEEDBACK_TABLE_NAME)
 
 st.set_page_config(page_title="Amazon Q Business Custom UI") #HTML title
 st.title("Amazon Q Business Custom UI") #page title
