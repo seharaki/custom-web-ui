@@ -38,7 +38,7 @@ OAUTH_CONFIG = {}
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
 Q_TABLE_NAME = os.environ.get("Q_TABLE_NAME", "QBusinessVOA")
-feedback_table = dynamodb.Table(Q_TABLE_NAME)
+qbusiness_table = dynamodb.Table(Q_TABLE_NAME)
 
 def retrieve_config_from_agent():
     """
@@ -216,7 +216,7 @@ def store_feedback(user_email, conversation_id, parent_message_id, user_message,
     Store user feedback in DynamoDB
     """
     try:
-        feedback_table.put_item(
+        qbusiness_table.put_item(
             Item={
                 'UserId': user_email,
                 'ConversationId': conversation_id,
@@ -235,7 +235,7 @@ def store_message_response(user_email, conversation_id, parent_message_id, user_
     Store user message and response in DynamoDB
     """
     try:
-        feedback_table.put_item(
+        qbusiness_table.put_item(
             Item={
                 'UserId': user_email,
                 'ConversationId': conversation_id,
