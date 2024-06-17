@@ -137,6 +137,8 @@ if st.session_state["show_feedback"]:
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
 
+    additional_feedback = ""
+
     if st.session_state.get("feedback_type") == "👎 Thumbs Down":
         feedback_reason = st.selectbox(
             "Please select the reason for your feedback:",
@@ -160,7 +162,7 @@ if st.session_state["show_feedback"]:
                     conversation_id=st.session_state["conversationId"],
                     parent_message_id=st.session_state["parentMessageId"],
                     user_message=prompt,
-                    feedback={"type": feedback_type, "reason": feedback_details}
+                    feedback={"type": st.session_state["feedback_type"], "reason": feedback_details}
                 )
                 st.success("Thank you for your feedback!")
                 st.session_state["show_feedback_success"] = True  # Show success message
