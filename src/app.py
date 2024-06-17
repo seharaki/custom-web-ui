@@ -20,6 +20,7 @@ def clear_chat_history():
     st.session_state["chat_history"] = []
     st.session_state["conversationId"] = ""
     st.session_state["parentMessageId"] = ""
+    st.session_state["user_prompt"] = ""  # Clear the user prompt as well
 
 oauth2 = utils.configure_oauth_component()
 if "token" not in st.session_state:
@@ -34,7 +35,7 @@ if "token" not in st.session_state:
         st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
         st.rerun()
 else:
-    token = st.session_state["token"]
+    token = st.session_state.token
     refresh_token = token.get("refresh_token")  # saving the long lived refresh_token
     user_email = jwt.decode(token["id_token"], options={"verify_signature": False})["email"]
     if st.button("Refresh Cognito Token"):
@@ -87,6 +88,9 @@ else:
     if "input" not in st.session_state:
         st.session_state.input = ""
 
+    if "user_prompt" not in st.session_state:
+        st.session_state.user_prompt = ""
+
     # Display the chat messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -94,6 +98,7 @@ else:
 
     # User-provided prompt
     if prompt := st.chat_input(key="chat_input"):
+        st.session_state.user_prompt = prompt  # Store the prompt in session state
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.write(prompt)
@@ -105,7 +110,7 @@ else:
             with st.spinner("Thinking..."):
                 placeholder = st.empty()
                 response = utils.get_queue_chain(
-                    prompt,
+                    st.session_state.user_prompt,  # Use the stored user prompt
                     st.session_state["conversationId"],
                     st.session_state["parentMessageId"],
                     st.session_state["idc_jwt_token"]["idToken"]
@@ -161,7 +166,7 @@ if st.session_state["show_feedback"]:
                     user_email=user_email,
                     conversation_id=st.session_state["conversationId"],
                     parent_message_id=st.session_state["parentMessageId"],
-                    user_message=prompt,
+                    user_message=st.session_state.user_prompt,  # Pass the stored user prompt
                     feedback={"type": st.session_state["feedback_type"], "reason": feedback_details}
                 )
                 # Clear feedback state after submission
