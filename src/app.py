@@ -130,15 +130,16 @@ else:
 
         st.session_state.messages.append({"role": "assistant", "content": full_response})
         # Feedback section
-        feedback_type = st.radio(
-            "Please provide feedback on the response:",
-            ["Thumbs Up", "Thumbs Down"]
-        )
-
+        feedback_type_thumbs_up = "👍 Thumbs Up"
+        feedback_type_thumbs_down = "👎 Thumbs Down"
         feedback_reason = ""
         additional_feedback = ""
+        feedback_type = st.radio(
+            "Please provide feedback on the response:",
+                [feedback_type_thumbs_up, feedback_type_thumbs_down]
+        )
 
-        if feedback_type == "Thumbs Down":
+        if feedback_type == feedback_type_thumbs_down:
             feedback_reason = st.selectbox(
                 "Please select the reason for your feedback:",
                 ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"]
