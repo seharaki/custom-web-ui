@@ -98,6 +98,7 @@ else:
         with st.chat_message("user"):
             st.write(prompt)
         st.session_state["show_feedback"] = False  # Hide feedback form when a new message is sent
+        st.session_state["feedback_submitted"] = False  # Reset feedback submission state for new feedback
 
     # If the last message is from the user, generate a response from the Q_backend
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
