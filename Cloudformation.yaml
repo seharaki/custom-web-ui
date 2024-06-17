@@ -593,6 +593,39 @@ Resources:
       Path: /
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  FeedbackDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: !Ref FeedbackTableName
+      AttributeDefinitions: 
+        - AttributeName: UserId
+          AttributeType: S
+        - AttributeName: Timestamp
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: UserId
+          KeyType: HASH
+        - AttributeName: Timestamp
+          KeyType: RANGE
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      TimeToLiveSpecification:
+        AttributeName: TTL
+        Enabled: true
+
+Parameters:
+  FeedbackTableName:
+    Description: Name of the DynamoDB table to store feedback
+    Type: String
+    Default: Feedback
+
+Outputs:
+  FeedbackTableArn:
+    Description: ARN of the DynamoDB table
+    Value: !GetAtt FeedbackDynamoDBTable.Arn
+    Export:
+      Name: FeedbackTableArn
 
 Outputs:
   URL:

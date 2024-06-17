@@ -75,8 +75,7 @@ else:
                 timedelta(
                     seconds=st.session_state["idc_jwt_token"]["expiresIn"])
         except Exception as e:
-            st.error(f"Error refreshing Identity Center token: {
-                     e}. Please reload the page.")
+            st.error(f"Error refreshing Identity Center token: {e}. Please reload the page.")
 
     col1, col2 = st.columns([1, 1])
 
@@ -131,8 +130,7 @@ else:
                     full_response = f"""{
                         response["answer"]}\n\n---\n{response["references"]}"""
                 else:
-                    full_response = f"""{
-                        response["answer"]}\n\n---\nNo sources"""
+                    full_response = f"""{response["answer"]}\n\n---\nNo sources"""
                 placeholder.markdown(full_response)
                 st.session_state["conversationId"] = response["conversationId"]
                 st.session_state["parentMessageId"] = response["parentMessageId"]
@@ -156,8 +154,7 @@ else:
                 feedback_options
             )
             if selected_option == "Other":
-                custom_feedback = st.text_area(
-                    "Please provide additional feedback:")
+                custom_feedback = st.text_area("Please provide additional feedback:")
             else:
                 custom_feedback = selected_option
 
