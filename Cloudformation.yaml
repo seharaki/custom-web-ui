@@ -1,5 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "CloudFormation for the blog on GenAI with QBusiness"
+
 Parameters:
   LatestAmiId:
     Description: EC2 machine image
@@ -262,6 +263,28 @@ Resources:
       Name: "Quick deployment"
       ReplicateTo: "NONE"
       GrowthType: "LINEAR"
+
+  FeedbackDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref FeedbackTableName
+      AttributeDefinitions:
+        - AttributeName: UserId
+          AttributeType: S
+        - AttributeName: Timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: UserId
+          KeyType: HASH
+        - AttributeName: Timestamp
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      TimeToLiveSpecification:
+        AttributeName: TTL
+        Enabled: true
+
   # EC2 and ALB Security Groups
   ELBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -343,7 +366,6 @@ Resources:
       HealthCheckType: ELB
       HealthCheckGracePeriod: 180
       VPCZoneIdentifier: !Ref PublicSubnetIds
-
       LaunchTemplate:
         Version: !GetAtt LaunchTemplate.LatestVersionNumber
         LaunchTemplateId: !Ref LaunchTemplate
@@ -417,7 +439,7 @@ Resources:
             venv/bin/pip install -r requirements.txt
             APPCONFIG_APP_NAME=${AppConfig} APPCONFIG_ENV_NAME=${AppConfigEnvironment} APPCONFIG_CONF_NAME=${AppConfigConfigProfile} nohup venv/bin/streamlit run src/app.py --server.port=8080 > logs.txt &
 
-    # Target Group, Listener and Application  Load Balancer
+  # Target Group, Listener and Application  Load Balancer
   EC2TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
@@ -593,39 +615,6 @@ Resources:
       Path: /
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  FeedbackDynamoDBTable:
-    Type: AWS::DynamoDB::Table
-    Properties: 
-      TableName: !Ref FeedbackTableName
-      AttributeDefinitions: 
-        - AttributeName: UserId
-          AttributeType: S
-        - AttributeName: Timestamp
-          AttributeType: S
-      KeySchema: 
-        - AttributeName: UserId
-          KeyType: HASH
-        - AttributeName: Timestamp
-          KeyType: RANGE
-      ProvisionedThroughput: 
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      TimeToLiveSpecification:
-        AttributeName: TTL
-        Enabled: true
-
-Parameters:
-  FeedbackTableName:
-    Description: Name of the DynamoDB table to store feedback
-    Type: String
-    Default: Feedback
-
-Outputs:
-  FeedbackTableArn:
-    Description: ARN of the DynamoDB table
-    Value: !GetAtt FeedbackDynamoDBTable.Arn
-    Export:
-      Name: FeedbackTableArn
 
 Outputs:
   URL:
