@@ -24,6 +24,14 @@ def clear_chat_history():
     st.session_state["conversationId"] = ""
     st.session_state["parentMessageId"] = ""
 
+def log_response(response, log_file_path="log.txt"):
+    try:
+        with open(log_file_path, "a") as log_file:
+            log_file.write(response + "\n")
+        print("Response has been logged to", log_file_path)
+    except Exception as e:
+        print("Failed to log response:", e)
+
 
 oauth2 = utils.configure_oauth_component()
 if "token" not in st.session_state:
@@ -119,6 +127,7 @@ else:
                 response = utils.get_queue_chain(prompt,st.session_state["conversationId"],
                                                  st.session_state["parentMessageId"],
                                                  st.session_state["idc_jwt_token"]["idToken"])
+                log_response(response)
                 if "references" in response:
                     full_response = f"""{response["answer"]}\n\n---\n{response["references"]}"""
                 else:
