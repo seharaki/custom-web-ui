@@ -146,6 +146,8 @@ if st.session_state["show_feedback"]:
             user_message=st.session_state.user_prompt,  # Pass the stored user prompt
             feedback={"type": st.session_state["feedback_type"], "reason": feedback_details}
         )
+        st.experimental_rerun()
+        
     if col2.button("👎", key="thumbs_down"):
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
@@ -184,7 +186,7 @@ if st.session_state["show_feedback"]:
                 st.session_state["additional_feedback"] = ""
                 st.session_state["show_feedback_success"] = True  # Show success message
                 st.experimental_rerun()
-st.experimental_rerun()
+
 # Display success message if feedback was submitted
 if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
     st.success("Thank you for your feedback!")
