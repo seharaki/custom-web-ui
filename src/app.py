@@ -122,6 +122,7 @@ else:
             )
             st.session_state["show_feedback"] = True
             st.session_state["show_feedback_success"] = False
+            st.warning("Safety message: Always wear your gloves when performing this task.")
 
 if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
