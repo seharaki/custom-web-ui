@@ -166,8 +166,6 @@ if st.session_state["show_feedback"] and not st.session_state.get("feedback_subm
                     feedback={"type": st.session_state["feedback_type"], "reason": feedback_details}
                 )
                 st.session_state["feedback_submitted"] = True
-                st.success("Thank you for your feedback!")
-                st.session_state["show_feedback_success"] = True  # Show success message
 
                 # Clear feedback state after submission
                 st.session_state["show_feedback"] = False
@@ -175,12 +173,11 @@ if st.session_state["show_feedback"] and not st.session_state.get("feedback_subm
                 st.session_state["feedback_reason"] = ""
                 st.session_state["additional_feedback"] = ""
 
+                # Show thank you message and hide feedback buttons
+                st.success("Thank you for your feedback!")
+                st.session_state["show_feedback_success"] = True
+
 # Display success message if feedback was submitted
 if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
-    st.success("Thank you for your feedback!")
-    # Clear feedback buttons and form
-    st.session_state["show_feedback"] = False
-    st.session_state["feedback_type"] = ""
-    st.session_state["feedback_reason"] = ""
-    st.session_state["additional_feedback"] = ""
     st.session_state["show_feedback_success"] = False  # Reset success message state after displaying it
+    st.success("Thank you for your feedback!")
