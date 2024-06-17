@@ -138,16 +138,18 @@ if st.session_state["show_feedback"]:
     if col1.button("👍", key="thumbs_up"):
         feedback_type = "👍 Thumbs Up"
         st.session_state["feedback_type"] = feedback_type
-        # Store feedback
+        # Store thumbs up feedback
         utils.store_feedback(
             user_email=user_email,
             conversation_id=st.session_state["conversationId"],
             parent_message_id=st.session_state["parentMessageId"],
-            user_message=st.session_state.user_prompt,  # Pass the stored user prompt
-            feedback={"type": st.session_state["feedback_type"]}
+            user_message=st.session_state.user_prompt,
+            feedback={"type": feedback_type}
         )
+        st.session_state["show_feedback"] = False
+        st.session_state["feedback_type"] = ""
+        st.session_state["show_feedback_success"] = True
         st.experimental_rerun()
-
     if col2.button("👎", key="thumbs_down"):
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
