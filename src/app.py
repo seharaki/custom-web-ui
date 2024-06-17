@@ -20,7 +20,6 @@ def clear_chat_history():
     st.session_state["chat_history"] = []
     st.session_state["conversationId"] = ""
     st.session_state["parentMessageId"] = ""
-    st.session_state["user_prompt"] = ""  # Clear the user prompt as well
 
 oauth2 = utils.configure_oauth_component()
 if "token" not in st.session_state:
@@ -35,7 +34,7 @@ if "token" not in st.session_state:
         st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
         st.rerun()
 else:
-    token = st.session_state.token
+    token = st.session_state["token"]
     refresh_token = token.get("refresh_token")  # saving the long lived refresh_token
     user_email = jwt.decode(token["id_token"], options={"verify_signature": False})["email"]
     if st.button("Refresh Cognito Token"):
@@ -88,9 +87,6 @@ else:
     if "input" not in st.session_state:
         st.session_state.input = ""
 
-    if "user_prompt" not in st.session_state:
-        st.session_state.user_prompt = ""
-
     # Display the chat messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -98,7 +94,6 @@ else:
 
     # User-provided prompt
     if prompt := st.chat_input(key="chat_input"):
-        st.session_state.user_prompt = prompt  # Store the prompt in session state
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.write(prompt)
@@ -110,7 +105,7 @@ else:
             with st.spinner("Thinking..."):
                 placeholder = st.empty()
                 response = utils.get_queue_chain(
-                    st.session_state.user_prompt,  # Use the stored user prompt
+                    prompt,
                     st.session_state["conversationId"],
                     st.session_state["parentMessageId"],
                     st.session_state["idc_jwt_token"]["idToken"]
@@ -141,7 +136,7 @@ if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
 
 if st.session_state["show_feedback"]:
-    col1, col2, _ = st.columns([1, 1, 10])
+    col1, col2, _ = st.columns([1, 1, 10])  # Adjusted column widths to bring buttons closer
     feedback_type = None
     if col1.button("👍", key="thumbs_up"):
         feedback_type = "👍 Thumbs Up"
@@ -200,3 +195,4 @@ if st.session_state["show_feedback"]:
 # Display success message if feedback was submitted
 if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
     st.success("Thank you for your feedback!")
+    st.session_state["show_feedback_success"] = False  # Reset success message state after displaying it
