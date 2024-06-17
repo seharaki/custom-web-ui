@@ -217,7 +217,7 @@ def store_feedback(user_email, conversation_id, parent_message_id, user_message,
     try:
         feedback_table.put_item(
             Item={
-                'UserEmail': user_email,
+                'UserId': user_email,
                 'ConversationId': conversation_id,
                 'ParentMessageId': parent_message_id,
                 'UserMessage': user_message,
