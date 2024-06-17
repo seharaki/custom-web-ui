@@ -11,6 +11,20 @@ utils.retrieve_config_from_agent()
 st.set_page_config(page_title="Amazon Q Business Custom UI")
 st.title("Amazon Q Business Custom UI")
 
+# Safety Messaging
+safety_message = '''At W, we are committed to a safety-first mindset by following all safety policies and procedures.  The Chatbot may describe a task common to a xxx facility.  Before attempting to replicate:
+ 
+
+·        Be certain that potential hazardous energy is controlled before breaking the plane of the machine and reaching in by obtaining exclusive control through Lockout Tagout/Energy Safe Position (ESP). 
+
+·        Ensure proper personal protective equipment (PPE) is employed.
+
+·        Consult the machine specific xx, Lockout Tagout and ESP procedures, your Supervisor or Safety Manager if you are unsure of any safety requirements of the task. 
+
+·        Notify any employees in the area that may be affected prior to beginning the task.
+
+If there are safety concerns identified involving the task, please notify your Supervisor or submit it through the Concern reporting system.'''
+
 # Define a function to clear the chat history
 def clear_chat_history():
     st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
@@ -122,7 +136,7 @@ else:
             )
             st.session_state["show_feedback"] = True
             st.session_state["show_feedback_success"] = False
-            st.warning("Safety message: Always wear your gloves when performing this task.")
+            st.warning(safety_message)
 
 if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
