@@ -59,7 +59,7 @@ else:
         except Exception as e:
             st.error(f"Error refreshing Identity Center token: {e}. Please reload the page.")
 
-    col1, col2 = st.columns([0.25, 0.25])
+    col1, col2 = st.columns([1, 1])
 
     with col1:
         st.write("Welcome: ", user_email)
@@ -133,7 +133,7 @@ if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
 
 if st.session_state["show_feedback"]:
-    col1, col2, _ = st.columns([1, 1, 3])
+    col1, col2, _ = st.columns([1, 1, 0.5])
     feedback_type = None
     if col1.button("👍", key="thumbs_up"):
         feedback_type = "👍 Thumbs Up"
