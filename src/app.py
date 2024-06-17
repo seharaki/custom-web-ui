@@ -148,28 +148,32 @@ if st.session_state["show_feedback"]:
         if feedback_reason == "Other":
             additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback_input")
 
-        if st.button("Submit Feedback", key="submit_feedback_button"):
-            if feedback_reason == "Other" and not additional_feedback:
-                st.warning("Please provide additional feedback for 'Other'.")
-            else:
-                feedback_details = feedback_reason
-                if additional_feedback:
-                    feedback_details = additional_feedback
+        if not st.session_state.get("feedback_submitted", False):
+            if st.button("Submit Feedback", key="submit_feedback_button"):
+                if feedback_reason == "Other" and not additional_feedback:
+                    st.warning("Please provide additional feedback for 'Other'.")
+                else:
+                    feedback_details = feedback_reason
+                    if additional_feedback:
+                        feedback_details = additional_feedback
 
-                # Store feedback
-                utils.store_feedback(
-                    user_email=user_email,
-                    conversation_id=st.session_state["conversationId"],
-                    parent_message_id=st.session_state["parentMessageId"],
-                    user_message=prompt,
-                    feedback={"type": st.session_state["feedback_type"], "reason": feedback_details}
-                )
-                # Clear feedback state after submission
-                st.session_state["show_feedback"] = False
-                st.session_state["feedback_type"] = ""
-                st.session_state["feedback_reason"] = ""
-                st.session_state["additional_feedback"] = ""
-                st.session_state["show_feedback_success"] = True  # Show success message
+                    # Store feedback
+                    utils.store_feedback(
+                        user_email=user_email,
+                        conversation_id=st.session_state["conversationId"],
+                        parent_message_id=st.session_state["parentMessageId"],
+                        user_message=prompt,
+                        feedback={"type": st.session_state["feedback_type"], "reason": feedback_details}
+                    )
+                    st.session_state["feedback_submitted"] = True
+                    st.success("Thank you for your feedback!")
+                    st.session_state["show_feedback_success"] = True  # Show success message
+
+                    # Clear feedback state after submission
+                    st.session_state["show_feedback"] = False
+                    st.session_state["feedback_type"] = ""
+                    st.session_state["feedback_reason"] = ""
+                    st.session_state["additional_feedback"] = ""
 
 # Display success message if feedback was submitted
 if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
