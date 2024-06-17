@@ -5,12 +5,6 @@ import utils
 
 UTC = timezone.utc
 
-# Init configuration
-utils.retrieve_config_from_agent()
-
-st.set_page_config(page_title="Amazon Q Business Custom UI")
-st.title("Amazon Q Business Custom UI")
-
 # Safety Messaging
 safety_message = '''At W, we are committed to a safety-first mindset by following all safety policies and procedures.  The Chatbot may describe a task common to a xxx facility.  Before attempting to replicate:
  
@@ -24,6 +18,15 @@ safety_message = '''At W, we are committed to a safety-first mindset by followin
 ·        Notify any employees in the area that may be affected prior to beginning the task.
 
 If there are safety concerns identified involving the task, please notify your Supervisor or submit it through the Concern reporting system.'''
+
+# Title
+title = "X Virtual Operator Chatbot"
+
+# Init configuration
+utils.retrieve_config_from_agent()
+
+st.set_page_config(page_title=title)
+st.title(title)
 
 # Define a function to clear the chat history
 def clear_chat_history():
@@ -69,9 +72,9 @@ else:
     col1, col2 = st.columns([1, 1])
 
     with col1:
-        st.write("Welcome: ", user_email)
+        st.write("Logged in with DeviceID: ", user_email)
     with col2:
-        st.button("Clear Chat History", on_click=clear_chat_history)
+        st.button("Clear Chat", on_click=clear_chat_history)
 
     if "messages" not in st.session_state:
         st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
@@ -142,7 +145,7 @@ if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
 
 if st.session_state["show_feedback"]:
-    col1, col2, _ = st.columns([1, 1, 1])
+    col1, col2, _ = st.columns([1, 1, 10])
     feedback_type = None
     if col1.button("👍", key="thumbs_up"):
         feedback_type = "👍 Thumbs Up"
