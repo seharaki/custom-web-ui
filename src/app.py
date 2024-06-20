@@ -34,13 +34,6 @@ def clear_chat_history():
     st.session_state["parentMessageId"] = ""
     st.session_state["user_prompt"] = ""  # Initialize user prompt
 
-# Define sample questions
-sample_questions = [
-    "This is sample question 1",
-    "This is sample question 2",
-    "This is sample question 3"
-]
-
 oauth2 = utils.configure_oauth_component()
 if "token" not in st.session_state:
     redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
@@ -96,22 +89,41 @@ else:
     if "user_prompt" not in st.session_state:
         st.session_state.user_prompt = ""
 
-    # Add buttons for sample questions
+    # Define sample questions
+    sample_questions = [
+        "This is sample question 1",
+        "This is sample question 2",
+        "This is sample question 3"
+    ]
+
+    # Check if buttons have been clicked recently to prevent spamming
+    if "last_button_click" not in st.session_state:
+        st.session_state.last_button_click = datetime.min
+
+    # Add buttons for sample questions right above the chat input
     col1, col2, col3 = st.columns(3)
-    if col1.button(sample_questions[0]):
+    now = datetime.now()
+    button_disabled = (now - st.session_state.last_button_click) < timedelta(seconds=1)
+
+    if col1.button(sample_questions[0], disabled=button_disabled):
+        st.session_state.last_button_click = now
         st.session_state.user_prompt = sample_questions[0]
         st.session_state.messages.append({"role": "user", "content": sample_questions[0]})
-    if col2.button(sample_questions[1]):
+    if col2.button(sample_questions[1], disabled=button_disabled):
+        st.session_state.last_button_click = now
         st.session_state.user_prompt = sample_questions[1]
         st.session_state.messages.append({"role": "user", "content": sample_questions[1]})
-    if col3.button(sample_questions[2]):
+    if col3.button(sample_questions[2], disabled=button_disabled):
+        st.session_state.last_button_click = now
         st.session_state.user_prompt = sample_questions[2]
         st.session_state.messages.append({"role": "user", "content": sample_questions[2]})
 
+    # Display the chat messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
+    # Handle user input from the chat input box
     if prompt := st.chat_input(key="chat_input"):
         st.session_state.user_prompt = prompt
         st.session_state.messages.append({"role": "user", "content": prompt})
