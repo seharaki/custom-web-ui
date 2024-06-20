@@ -100,16 +100,6 @@ else:
     if "clicked_samples" not in st.session_state:
         st.session_state.clicked_samples = []
 
-    # Display sample question buttons if they haven't been clicked yet
-    remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
-    if remaining_questions:
-        cols = st.columns(len(remaining_questions))
-        for idx, question in enumerate(remaining_questions):
-            if cols[idx].button(question):
-                st.session_state.clicked_samples.append(question)
-                st.session_state.user_prompt = question
-                st.session_state.messages.append({"role": "user", "content": question})
-
     # Display the chat messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -122,6 +112,17 @@ else:
         with st.chat_message("user"):
             st.write(prompt)
         st.session_state["show_feedback"] = False
+
+    # Display sample question buttons if they haven't been clicked yet
+    remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
+    if remaining_questions:
+        cols = st.columns(len(remaining_questions))
+        for idx, question in enumerate(remaining_questions):
+            if cols[idx].button(question):
+                st.session_state.clicked_samples.append(question)
+                st.session_state.user_prompt = question
+                st.session_state.messages.append({"role": "user", "content": question})
+                st.experimental_rerun()
 
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
         with st.chat_message("assistant"):
