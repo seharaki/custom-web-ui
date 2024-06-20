@@ -91,6 +91,7 @@ def get_iam_oidc_token(id_token):
     """
     Get the IAM OIDC token using the ID token retrieved from Cognito
     """
+    raise Exception(id_token)
     logger.info(f"Current id_token: {id_token}")
     client = boto3.client("sso-oidc", region_name=REGION)
     response = client.create_token_with_iam(
