@@ -96,27 +96,19 @@ else:
         "This is sample question 3"
     ]
 
-    # Check if buttons have been clicked recently to prevent spamming
-    if "last_button_click" not in st.session_state:
-        st.session_state.last_button_click = datetime.min
+    # Track which sample questions have been clicked
+    if "clicked_samples" not in st.session_state:
+        st.session_state.clicked_samples = []
 
-    # Add buttons for sample questions right above the chat input
-    col1, col2, col3 = st.columns(3)
-    now = datetime.now()
-    button_disabled = (now - st.session_state.last_button_click) < timedelta(seconds=1)
-
-    if col1.button(sample_questions[0], disabled=button_disabled):
-        st.session_state.last_button_click = now
-        st.session_state.user_prompt = sample_questions[0]
-        st.session_state.messages.append({"role": "user", "content": sample_questions[0]})
-    if col2.button(sample_questions[1], disabled=button_disabled):
-        st.session_state.last_button_click = now
-        st.session_state.user_prompt = sample_questions[1]
-        st.session_state.messages.append({"role": "user", "content": sample_questions[1]})
-    if col3.button(sample_questions[2], disabled=button_disabled):
-        st.session_state.last_button_click = now
-        st.session_state.user_prompt = sample_questions[2]
-        st.session_state.messages.append({"role": "user", "content": sample_questions[2]})
+    # Display sample question buttons if they haven't been clicked yet
+    remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
+    if remaining_questions:
+        cols = st.columns(len(remaining_questions))
+        for idx, question in enumerate(remaining_questions):
+            if cols[idx].button(question):
+                st.session_state.clicked_samples.append(question)
+                st.session_state.user_prompt = question
+                st.session_state.messages.append({"role": "user", "content": question})
 
     # Display the chat messages
     for message in st.session_state.messages:
