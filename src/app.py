@@ -8,15 +8,10 @@ UTC = timezone.utc
 # Safety Messaging
 safety_message = '''At W, we are committed to a safety-first mindset by following all safety policies and procedures.  The Chatbot may describe a task common to a xxx facility.  Before attempting to replicate:
  
-
 ·        Be certain that potential hazardous energy is controlled before breaking the plane of the machine and reaching in by obtaining exclusive control through Lockout Tagout/Energy Safe Position (ESP). 
-
 ·        Ensure proper personal protective equipment (PPE) is employed.
-
 ·        Consult the machine specific xx, Lockout Tagout and ESP procedures, your Supervisor or Safety Manager if you are unsure of any safety requirements of the task. 
-
 ·        Notify any employees in the area that may be affected prior to beginning the task.
-
 If there are safety concerns identified involving the task, please notify your Supervisor or submit it through the Concern reporting system.'''
 
 # Title
@@ -38,6 +33,13 @@ def clear_chat_history():
     st.session_state["conversationId"] = ""
     st.session_state["parentMessageId"] = ""
     st.session_state["user_prompt"] = ""  # Initialize user prompt
+
+# Define sample questions
+sample_questions = [
+    "This is sample question 1",
+    "This is sample question 2",
+    "This is sample question 3"
+]
 
 oauth2 = utils.configure_oauth_component()
 if "token" not in st.session_state:
@@ -93,6 +95,18 @@ else:
 
     if "user_prompt" not in st.session_state:
         st.session_state.user_prompt = ""
+
+    # Add buttons for sample questions
+    col1, col2, col3 = st.columns(3)
+    if col1.button(sample_questions[0]):
+        st.session_state.user_prompt = sample_questions[0]
+        st.session_state.messages.append({"role": "user", "content": sample_questions[0]})
+    if col2.button(sample_questions[1]):
+        st.session_state.user_prompt = sample_questions[1]
+        st.session_state.messages.append({"role": "user", "content": sample_questions[1]})
+    if col3.button(sample_questions[2]):
+        st.session_state.user_prompt = sample_questions[2]
+        st.session_state.messages.append({"role": "user", "content": sample_questions[2]})
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
