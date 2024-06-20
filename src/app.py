@@ -116,9 +116,10 @@ else:
     # Display sample question buttons if they haven't been clicked yet
     remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
     if remaining_questions:
+        st.markdown("### Frequently Asked Questions")
         cols = st.columns(len(remaining_questions))
         for idx, question in enumerate(remaining_questions):
-            if cols[idx].button(question):
+            if cols[idx].button(question, key=question, help="Click to ask this question", use_container_width=True):
                 st.session_state.clicked_samples.append(question)
                 st.session_state.user_prompt = question
                 st.session_state.messages.append({"role": "user", "content": question})
