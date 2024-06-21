@@ -39,7 +39,7 @@ def clear_chat_history():
 def oauth2_authorize():
     redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
     client_id = utils.OAUTH_CONFIG['ClientId']  # Retrieve client_id from configuration
-    authorize_url = utils.OAUTH_CONFIG['AuthorizeUrl']  # Add this to your config if not already there
+    authorize_url = "https://login.microsoftonline.com/5bc066c3-cdbd-4451-ab4d-2278f7af93fb/ouath2/v2.0/authorize"  # Use your actual authorization URL here
     params = {
         'client_id': client_id,
         'response_type': 'code',
@@ -54,7 +54,7 @@ def oauth2_authorize():
 
 # Function to handle the OAuth2 callback
 def handle_oauth2_callback():
-    query_params = st.query_params
+    query_params = st.experimental_get_query_params()
     if 'code' in query_params:
         code = query_params['code'][0]
         redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
