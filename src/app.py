@@ -173,14 +173,14 @@ if st.session_state["show_feedback"]:
             else:
                 feedback_details = feedback_reason
                 if additional_feedback:
-                    feedback details = additional_feedback
+                    feedback_details = additional_feedback
 
                 utils.store_feedback(
                     user_email=user_email,
                     conversation_id=st.session_state["conversationId"],
                     parent_message_id=st.session_state["parentMessageId"],
                     user_message=st.session_state.user_prompt,
-                    feedback={"type": st.session_state["feedback_type"], "reason": feedback details}
+                    feedback={"type": st.session_state["feedback_type"], "reason": feedback_details}
                 )
                 st.session_state["show_feedback"] = False
                 st.session_state["feedback_type"] = ""
