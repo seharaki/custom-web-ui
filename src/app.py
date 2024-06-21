@@ -47,13 +47,16 @@ else:
     token = st.session_state.token
     refresh_token = token.get("refresh_token")
     user_email = jwt.decode(token["id_token"], options={"verify_signature": False})["email"]
-    token = oauth2.refresh_token(token, force=True)
-    # Put the refresh token in the session state
-    token["refresh_token"] = refresh_token
-    # Retrieve the Identity Center token
-    st.session_state.token = token
-    st.rerun()
-    
+    if st.button("Refresh Cognito Token") :
+        # If refresh token button is clicked or the token is expired, refresh the token
+        token = oauth2.refresh_token(token, force=True)
+        # Put the refresh token in the session state as it is not returned by Cognito
+        token["refresh_token"] = refresh_token
+        # Retrieve the Identity Center token
+
+        st.session_state.token = token
+        st.rerun()
+
     if "idc_jwt_token" not in st.session_state:
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
         st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
