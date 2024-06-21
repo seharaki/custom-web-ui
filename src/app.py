@@ -101,6 +101,29 @@ else:
         with st.chat_message("user"):
             st.write(prompt)
         st.session_state["show_feedback"] = False
+            # Define sample questions
+        sample_questions = [
+            "This is sample question 1",
+            "This is sample question 2",
+            "This is sample question 3"
+        ]
+
+        # Track which sample questions have been clicked
+        if "clicked_samples" not in st.session_state:
+            st.session_state.clicked_samples = []
+
+        # Display sample question buttons if they haven't been clicked yet
+        if token:
+            remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
+            if remaining_questions:
+                st.markdown("<div style='font-size:16px;'>Frequently Asked Questions</div>", unsafe_allow_html=True)
+                cols = st.columns(len(remaining_questions))
+                for idx, question in enumerate(remaining_questions):
+                    if cols[idx].button(question, key=question, help="Click to ask this question", use_container_width=True):
+                        st.session_state.clicked_samples.append(question)
+                        st.session_state.user_prompt = question
+                        st.session_state.messages.append({"role": "user", "content": question})
+                        st.experimental_rerun()
 
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
         with st.chat_message("assistant"):
@@ -131,30 +154,6 @@ else:
             st.session_state["show_feedback"] = True
             st.session_state["show_feedback_success"] = False
             st.warning(safety_message, icon="🚨")
-
-    # Define sample questions
-    sample_questions = [
-        "This is sample question 1",
-        "This is sample question 2",
-        "This is sample question 3"
-    ]
-
-    # Track which sample questions have been clicked
-    if "clicked_samples" not in st.session_state:
-        st.session_state.clicked_samples = []
-
-    # Display sample question buttons if they haven't been clicked yet
-    if token:
-        remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
-        if remaining_questions:
-            st.markdown("<div style='font-size:16px; margin-top: 10px;'>Frequently Asked Questions</div>", unsafe_allow_html=True)
-            cols = st.columns(len(remaining_questions))
-            for idx, question in enumerate(remaining_questions):
-                if cols[idx].button(question, key=question, help="Click to ask this question", use_container_width=True):
-                    st.session_state.clicked_samples.append(question)
-                    st.session_state.user_prompt = question
-                    st.session_state.messages.append({"role": "user", "content": question})
-                    st.experimental_rerun()
 
 if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
@@ -216,27 +215,3 @@ if st.session_state["show_feedback"]:
 if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
     st.success("Thank you for your feedback!")
     st.session_state["show_feedback_success"] = False
-
-# Define sample questions
-sample_questions = [
-    "This is sample question 1",
-    "This is sample question 2",
-    "This is sample question 3"
-]
-
-# Track which sample questions have been clicked
-if "clicked_samples" not in st.session_state:
-    st.session_state.clicked_samples = []
-
-# Display sample question buttons if they haven't been clicked yet
-if token:
-    remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
-    if remaining_questions:
-        st.markdown("<div style='font-size:16px; margin-top: 10px;'>Frequently Asked Questions</div>", unsafe_allow_html=True)
-        cols = st.columns(len(remaining_questions))
-        for idx, question in enumerate(remaining_questions):
-            if cols[idx].button(question, key=question, help="Click to ask this question", use_container_width=True):
-                st.session_state.clicked_samples.append(question)
-                st.session_state.user_prompt = question
-                st.session_state.messages.append({"role": "user", "content": question})
-                st.experimental_rerun()
