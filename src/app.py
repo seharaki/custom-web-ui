@@ -40,6 +40,7 @@ def oauth2_authorize():
     oauth2 = utils.configure_oauth_component()
     redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
     client_id = utils.OAUTH_CONFIG['ClientId']  # Retrieve client_id from configuration
+    authorize_url = utils.OAUTH_CONFIG['AuthorizeUrl']  # Add this to your config if not already there
     params = {
         'client_id': client_id,
         'response_type': 'code',
@@ -49,18 +50,19 @@ def oauth2_authorize():
         'code_challenge': 'S256_challenge',  # Generate a PKCE challenge
         'code_challenge_method': 'S256'
     }
-    authorization_url = f"{oauth2.authorize_url}?{urlencode(params)}"
+    authorization_url = f"{authorize_url}?{urlencode(params)}"
     st.experimental_set_query_params(redirect=authorization_url)
 
 # Function to handle the OAuth2 callback
 def handle_oauth2_callback():
-    query_params = st.query_params
+    query_params = st.experimental_get_query_params()
     if 'code' in query_params:
         code = query_params['code'][0]
         oauth2 = utils.configure_oauth_component()
         redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
+        token_url = utils.OAUTH_CONFIG['TokenUrl']  # Add this to your config if not already there
         token_response = oauth2.fetch_token(
-            token_url=oauth2.token_url,
+            token_url=token_url,
             authorization_response=redirect_uri,
             code=code,
             client_id=utils.OAUTH_CONFIG['ClientId'],  # Use client_id from configuration
