@@ -2,16 +2,17 @@ from datetime import datetime, timedelta, timezone
 import jwt
 import streamlit as st
 import utils
+from urllib.parse import urlencode
 
 UTC = timezone.utc
 
 # Safety Messaging
-safety_message = '''At W, we are committed to a safety-first mindset by following all safety policies and procedures.  The Chatbot may describe a task common to a xxx facility.  Before attempting to replicate:
+safety_message = '''At W, we are committed to a safety-first mindset by following all safety policies and procedures. The Chatbot may describe a task common to a xxx facility. Before attempting to replicate:
  
-·        Be certain that potential hazardous energy is controlled before breaking the plane of the machine and reaching in by obtaining exclusive control through Lockout Tagout/Energy Safe Position (ESP). 
-·        Ensure proper personal protective equipment (PPE) is employed.
-·        Consult the machine specific xx, Lockout Tagout and ESP procedures, your Supervisor or Safety Manager if you are unsure of any safety requirements of the task. 
-·        Notify any employees in the area that may be affected prior to beginning the task.
+· Be certain that potential hazardous energy is controlled before breaking the plane of the machine and reaching in by obtaining exclusive control through Lockout Tagout/Energy Safe Position (ESP). 
+· Ensure proper personal protective equipment (PPE) is employed.
+· Consult the machine specific xx, Lockout Tagout and ESP procedures, your Supervisor or Safety Manager if you are unsure of any safety requirements of the task. 
+· Notify any employees in the area that may be affected prior to beginning the task.
 If there are safety concerns identified involving the task, please notify your Supervisor or submit it through the Concern reporting system.'''
 
 # Title
@@ -34,15 +35,47 @@ def clear_chat_history():
     st.session_state["parentMessageId"] = ""
     st.session_state["user_prompt"] = ""  # Initialize user prompt
 
-oauth2 = utils.configure_oauth_component()
-if "token" not in st.session_state:
+# Function to perform OAuth2 authorization
+def oauth2_authorize():
+    oauth2 = utils.configure_oauth_component()
     redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
-    result = oauth2.authorize_button("Start Chatting", scope="openid email", pkce="S256", redirect_uri=redirect_uri)
-    if result and "token" in result:
-        st.session_state.token = result.get("token")
+    params = {
+        'client_id': oauth2.client_id,
+        'response_type': 'code',
+        'scope': 'openid email',
+        'redirect_uri': redirect_uri,
+        'state': 'random_state_string',  # Use a proper state value
+        'code_challenge': 'S256_challenge',  # Generate a PKCE challenge
+        'code_challenge_method': 'S256'
+    }
+    authorization_url = f"{oauth2.authorize_url}?{urlencode(params)}"
+    st.experimental_set_query_params(redirect=authorization_url)
+
+# Function to handle the OAuth2 callback
+def handle_oauth2_callback():
+    query_params = st.experimental_get_query_params()
+    if 'code' in query_params:
+        code = query_params['code'][0]
+        oauth2 = utils.configure_oauth_component()
+        redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
+        token_response = oauth2.fetch_token(
+            token_url=oauth2.token_url,
+            authorization_response=redirect_uri,
+            code=code,
+            client_id=oauth2.client_id,
+            redirect_uri=redirect_uri
+        )
+        st.session_state.token = token_response
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(st.session_state.token["id_token"])
         st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
-        st.rerun()
+        st.experimental_rerun()
+
+# Check if user is authenticated, if not, perform OAuth2 authorization
+if "token" not in st.session_state:
+    handle_oauth2_callback()
+    if "token" not in st.session_state:
+        oauth2_authorize()
+
 else:
     token = st.session_state.token
     refresh_token = token.get("refresh_token")
@@ -64,8 +97,8 @@ else:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
         st.button("Clear Chat", on_click=clear_chat_history)
-    
-        # Define sample questions
+
+    # Define sample questions
     sample_questions = [
         "This is sample question 1",
         "This is sample question 2",
