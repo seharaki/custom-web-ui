@@ -37,7 +37,6 @@ def clear_chat_history():
 
 # Function to perform OAuth2 authorization
 def oauth2_authorize():
-    oauth2 = utils.configure_oauth_component()
     redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
     client_id = utils.OAUTH_CONFIG['ClientId']  # Retrieve client_id from configuration
     authorize_url = utils.OAUTH_CONFIG['AuthorizeUrl']  # Add this to your config if not already there
@@ -55,17 +54,18 @@ def oauth2_authorize():
 
 # Function to handle the OAuth2 callback
 def handle_oauth2_callback():
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params
     if 'code' in query_params:
         code = query_params['code'][0]
-        oauth2 = utils.configure_oauth_component()
         redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
         token_url = utils.OAUTH_CONFIG['TokenUrl']  # Add this to your config if not already there
-        token_response = oauth2.fetch_token(
+        client_id = utils.OAUTH_CONFIG['ClientId']
+        client_secret = utils.OAUTH_CONFIG.get('ClientSecret', '')  # Use client_secret if required
+        token_response = utils.fetch_token(
             token_url=token_url,
-            authorization_response=redirect_uri,
             code=code,
-            client_id=utils.OAUTH_CONFIG['ClientId'],  # Use client_id from configuration
+            client_id=client_id,
+            client_secret=client_secret,
             redirect_uri=redirect_uri
         )
         st.session_state.token = token_response
