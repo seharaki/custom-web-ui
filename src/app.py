@@ -173,14 +173,14 @@ if st.session_state["show_feedback"]:
             else:
                 feedback_details = feedback_reason
                 if additional_feedback:
-                    feedback_details = additional_feedback
+                    feedback details = additional_feedback
 
                 utils.store_feedback(
                     user_email=user_email,
                     conversation_id=st.session_state["conversationId"],
                     parent_message_id=st.session_state["parentMessageId"],
                     user_message=st.session_state.user_prompt,
-                    feedback={"type": st.session_state["feedback_type"], "reason": feedback_details}
+                    feedback={"type": st.session_state["feedback_type"], "reason": feedback details}
                 )
                 st.session_state["show_feedback"] = False
                 st.session_state["feedback_type"] = ""
@@ -193,7 +193,6 @@ if "show_feedback_success" in st.session_state and st.session_state["show_feedba
     st.success("Thank you for your feedback!")
     st.session_state["show_feedback_success"] = False
 
-# Place "Frequently Asked Questions" at the bottom
 # Define sample questions
 sample_questions = [
     "This is sample question 1",
@@ -208,7 +207,7 @@ if "clicked_samples" not in st.session_state:
 # Display sample question buttons if they haven't been clicked yet
 remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
 if remaining_questions:
-    st.markdown("### Frequently Asked Questions")
+    st.markdown("<div style='font-size:small'>### Frequently Asked Questions</div>", unsafe_allow_html=True)
     cols = st.columns(len(remaining_questions))
     for idx, question in enumerate(remaining_questions):
         if cols[idx].button(question, key=question, help="Click to ask this question", use_container_width=True):
