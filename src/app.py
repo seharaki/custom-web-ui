@@ -64,6 +64,30 @@ else:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
         st.button("Clear Chat", on_click=clear_chat_history)
+    
+        # Define sample questions
+    sample_questions = [
+        "This is sample question 1",
+        "This is sample question 2",
+        "This is sample question 3"
+    ]
+
+    # Track which sample questions have been clicked
+    if "clicked_samples" not in st.session_state:
+        st.session_state.clicked_samples = []
+
+    # Display sample question buttons if they haven't been clicked yet
+    if token:
+        remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
+        if remaining_questions:
+            st.markdown("<div style='font-size:16px;'>Frequently Asked Questions</div>", unsafe_allow_html=True)
+            cols = st.columns(len(remaining_questions))
+            for idx, question in enumerate(remaining_questions):
+                if cols[idx].button(question, key=question, help="Click to ask this question", use_container_width=True):
+                    st.session_state.clicked_samples.append(question)
+                    st.session_state.user_prompt = question
+                    st.session_state.messages.append({"role": "user", "content": question})
+                    st.experimental_rerun()
 
     if "messages" not in st.session_state:
         st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
@@ -101,29 +125,6 @@ else:
         with st.chat_message("user"):
             st.write(prompt)
         st.session_state["show_feedback"] = False
-            # Define sample questions
-        sample_questions = [
-            "This is sample question 1",
-            "This is sample question 2",
-            "This is sample question 3"
-        ]
-
-        # Track which sample questions have been clicked
-        if "clicked_samples" not in st.session_state:
-            st.session_state.clicked_samples = []
-
-        # Display sample question buttons if they haven't been clicked yet
-        if token:
-            remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
-            if remaining_questions:
-                st.markdown("<div style='font-size:16px;'>Frequently Asked Questions</div>", unsafe_allow_html=True)
-                cols = st.columns(len(remaining_questions))
-                for idx, question in enumerate(remaining_questions):
-                    if cols[idx].button(question, key=question, help="Click to ask this question", use_container_width=True):
-                        st.session_state.clicked_samples.append(question)
-                        st.session_state.user_prompt = question
-                        st.session_state.messages.append({"role": "user", "content": question})
-                        st.experimental_rerun()
 
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
         with st.chat_message("assistant"):
