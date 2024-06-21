@@ -39,8 +39,9 @@ def clear_chat_history():
 def oauth2_authorize():
     oauth2 = utils.configure_oauth_component()
     redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
+    client_id = utils.OAUTH_CONFIG['ClientId']  # Retrieve client_id from configuration
     params = {
-        'client_id': oauth2.client_id,
+        'client_id': client_id,
         'response_type': 'code',
         'scope': 'openid email',
         'redirect_uri': redirect_uri,
@@ -53,7 +54,7 @@ def oauth2_authorize():
 
 # Function to handle the OAuth2 callback
 def handle_oauth2_callback():
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params
     if 'code' in query_params:
         code = query_params['code'][0]
         oauth2 = utils.configure_oauth_component()
@@ -62,7 +63,7 @@ def handle_oauth2_callback():
             token_url=oauth2.token_url,
             authorization_response=redirect_uri,
             code=code,
-            client_id=oauth2.client_id,
+            client_id=utils.OAUTH_CONFIG['ClientId'],  # Use client_id from configuration
             redirect_uri=redirect_uri
         )
         st.session_state.token = token_response
