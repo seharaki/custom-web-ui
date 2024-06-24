@@ -99,8 +99,9 @@ else:
 
     # Display remaining session time
     remaining_time = get_remaining_session_time()
-    if remaining_time & session_toggle:
-        st.info(f"Session expires in: {remaining_time}")
+    if remaining_time:
+        if session_toggle:
+            st.info(f"Session expires in: {remaining_time}")
 
     # Define sample questions
     sample_questions = [
