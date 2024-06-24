@@ -38,7 +38,7 @@ def get_remaining_session_time():
 def refresh_token_if_needed():
     if "idc_jwt_token" in st.session_state:
         remaining_time = get_remaining_session_time()
-        if remaining_time and remaining_time < timedelta(minutes=30):
+        if remaining_time and remaining_time < timedelta(minutes=1):
             try:
                 token = oauth2.refresh_token(st.session_state.token, force=True)
                 # Store refresh token if available
