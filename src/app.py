@@ -251,6 +251,3 @@ if st.session_state["show_feedback"]:
 
 if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
     st.success("Thank you for your feedback!")
-
-# Auto-refresh the page every 5 minutes to ensure token refresh if needed
-st.experimental_rerun(300)
