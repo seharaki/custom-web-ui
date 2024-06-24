@@ -6,13 +6,7 @@ import utils
 UTC = timezone.utc
 
 # Safety Messaging
-safety_message = '''At W, we are committed to a safety-first mindset by following all safety policies and procedures.  The Chatbot may describe a task common to a xxx facility.  Before attempting to replicate:
- 
-·        Be certain that potential hazardous energy is controlled before breaking the plane of the machine and reaching in by obtaining exclusive control through Lockout Tagout/Energy Safe Position (ESP). 
-·        Ensure proper personal protective equipment (PPE) is employed.
-·        Consult the machine specific xx, Lockout Tagout and ESP procedures, your Supervisor or Safety Manager if you are unsure of any safety requirements of the task. 
-·        Notify any employees in the area that may be affected prior to beginning the task.
-If there are safety concerns identified involving the task, please notify your Supervisor or submit it through the Concern reporting system.'''
+safety_message = "X"
 
 # Title
 title = "X Virtual Operator Chatbot"
@@ -49,16 +43,24 @@ if "token" not in st.session_state:
 else:
     token = st.session_state.token
     refresh_token = token.get("refresh_token")
-    st.warning(refresh_token)
     user_email = jwt.decode(token["id_token"], options={"verify_signature": False})["email"]
-    if st.button("Refresh Cognito Token") :
+
+    if st.button("Refresh EntraID Token"):
         # If refresh token button is clicked or the token is expired, refresh the token
-        token = oauth2.refresh_token(token, force=True)
-        # Put the refresh token in the session state as it is not returned by Cognito
-        token["refresh_token"] = refresh_token
-        # Retrieve the Identity Center token
-        st.session_state.token = token
-        st.rerun()
+        try:
+            token = oauth2.refresh_token(token, force=True)
+            # Put the refresh token in the session state as it is not returned by EntraID
+            if "refresh_token" not in token:
+                token["refresh_token"] = refresh_token
+            # Retrieve the Identity Center token
+            st.session_state.token = token
+            st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
+            st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error refreshing token: {e}. Please log in again.")
+            del st.session_state["token"]
+            st.rerun()
 
     if "idc_jwt_token" not in st.session_state:
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
@@ -69,14 +71,15 @@ else:
             st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
         except Exception as e:
             st.error(f"Error refreshing Identity Center token: {e}. Please reload the page.")
+
     col1, col2 = st.columns([1, 1])
 
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
         st.button("Clear Chat", on_click=clear_chat_history)
-    
-        # Define sample questions
+
+    # Define sample questions
     sample_questions = [
         "This is sample question 1",
         "This is sample question 2",
