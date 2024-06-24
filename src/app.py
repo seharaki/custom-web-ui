@@ -39,9 +39,12 @@ if "token" not in st.session_state:
     redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
     result = oauth2.authorize_button("Start Chatting", scope="openid email", pkce="S256", redirect_uri=redirect_uri)
     if result and "token" in result:
+        # If authorization successful, save token in session state
         st.session_state.token = result.get("token")
+        # Retrieve the Identity Center token
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(st.session_state.token["id_token"])
-        st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
+        st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + \
+            timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
         st.rerun()
 else:
     token = st.session_state.token
