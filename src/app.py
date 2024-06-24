@@ -28,6 +28,13 @@ def clear_chat_history():
     st.session_state["parentMessageId"] = ""
     st.session_state["user_prompt"] = ""  # Initialize user prompt
 
+def get_remaining_session_time():
+    if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
+        expires_at = st.session_state["idc_jwt_token"]["expires_at"]
+        remaining_time = expires_at - datetime.now(tz=UTC)
+        return remaining_time
+    return None
+
 oauth2 = utils.configure_oauth_component()
 if "token" not in st.session_state:
     redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
@@ -57,17 +64,24 @@ else:
 
     if st.button("Refresh EntraID Token"):
         # If refresh token button is clicked or the token is expired, refresh the token
-        token = oauth2.refresh_token(token, force=True)
-        # Store refresh token if available
-        if "refresh_token" in token:
-            st.session_state.refresh_token = token["refresh_token"]
-        else:
-            token["refresh_token"] = refresh_token
-        # Retrieve the Identity Center token
-        st.session_state.token = token
-        st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
-        st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
-        st.rerun()
+        try:
+            token = oauth2.refresh_token(token, force=True)
+            # Store refresh token if available
+            if "refresh_token" in token:
+                st.session_state.refresh_token = token["refresh_token"]
+            else:
+                token["refresh_token"] = refresh_token
+            # Retrieve the Identity Center token
+            st.session_state.token = token
+            st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
+            st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error refreshing token: {e}. Please log in again.")
+            del st.session_state["token"]
+            if "refresh_token" in st.session_state:
+                del st.session_state["refresh_token"]
+            st.rerun()
 
     if "idc_jwt_token" not in st.session_state:
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
@@ -85,6 +99,13 @@ else:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
         st.button("Clear Chat", on_click=clear_chat_history)
+
+    # Display remaining session time
+    remaining_time = get_remaining_session_time()
+    if remaining_time:
+        st.info(f"Session expires in: {remaining_time}")
+    else:
+        st.error("Session expiration time is not available.")
 
     # Define sample questions
     sample_questions = [
