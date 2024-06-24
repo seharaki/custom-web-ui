@@ -3,13 +3,11 @@ import jwt
 import streamlit as st
 import utils
 
-UTC = timezone.utc
-
-# Title
-title = "X Virtual Operator Chatbot"
 
 # Page Configuration
-st.set_page_config(page_title=title, layout="wide")
+st.set_page_config(page_title="X Virtual Operator Chatbot", layout="wide")
+
+UTC = timezone.utc
 
 hide_streamlit_style = """
         <style>
