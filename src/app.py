@@ -5,14 +5,25 @@ import utils
 
 UTC = timezone.utc
 
+# Title
+title = "X Virtual Operator Chatbot"
+
+# Page Configuration
+st.set_page_config(page_title=title, layout="wide")
+
+hide_streamlit_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        </style>
+        """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 # Safety Messaging
 safety_message = "X"
 
 # Show Session Time
 session_toggle = False
-
-# Title
-title = "X Virtual Operator Chatbot"
 
 # Init configuration
 utils.retrieve_config_from_agent()
@@ -119,7 +130,7 @@ else:
     if token:
         remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
         if remaining_questions:
-            st.markdown("<div style='font-size:16px; font-weight: bold; color: blue;'>Frequently Asked Questions</div>", unsafe_allow_html=True)
+            st.markdown("<div style='font-size:16px; font-weight: bold;'>Frequently Asked Questions</div>", unsafe_allow_html=True)
             cols = st.columns(len(remaining_questions))
             for idx, question in enumerate(remaining_questions):
                 if cols[idx].button(question, key=question, help="Click to ask this question", use_container_width=True):
