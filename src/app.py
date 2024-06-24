@@ -132,9 +132,9 @@ else:
                 """
                 <style>
                 .faq-title {
+                    text-align: center;
                     font-size: 16px;
                     font-weight: bold;
-                    color: blue;
                     margin-bottom: 20px; /* Adjust the value as needed */
                 }
                 </style>
