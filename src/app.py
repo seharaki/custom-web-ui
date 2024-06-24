@@ -26,9 +26,6 @@ session_toggle = False
 # Init configuration
 utils.retrieve_config_from_agent()
 
-st.set_page_config(page_title=title)
-st.title(title)
-
 # Define a function to clear the chat history
 def clear_chat_history():
     st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
