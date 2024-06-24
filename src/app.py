@@ -128,7 +128,20 @@ else:
     if token:
         remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
         if remaining_questions:
-            st.markdown("<div style='font-size:16px; font-weight: bold;'>Frequently Asked Questions</div>", unsafe_allow_html=True)
+            st.markdown(
+                """
+                <style>
+                .faq-title {
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: blue;
+                    margin-bottom: 20px; /* Adjust the value as needed */
+                }
+                </style>
+                <div class="faq-title">Frequently Asked Questions</div>
+                """,
+                unsafe_allow_html=True
+            )
             cols = st.columns(len(remaining_questions))
             for idx, question in enumerate(remaining_questions):
                 if cols[idx].button(question, key=question, help="Click to ask this question", use_container_width=True):
