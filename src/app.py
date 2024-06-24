@@ -8,6 +8,9 @@ UTC = timezone.utc
 # Safety Messaging
 safety_message = "X"
 
+# Show Session Time
+session_toggle = False
+
 # Title
 title = "X Virtual Operator Chatbot"
 
@@ -51,7 +54,7 @@ def refresh_token_if_needed():
                 st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
                 st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
             except Exception as e:
-                st.error(f"Error refreshing token: {e}. Please log in again.")
+                st.error(f"Error refreshing token: {e}. Refresh the page.")
                 del st.session_state["token"]
                 if "refresh_token" in st.session_state:
                     del st.session_state["refresh_token"]
@@ -96,10 +99,8 @@ else:
 
     # Display remaining session time
     remaining_time = get_remaining_session_time()
-    if remaining_time:
+    if remaining_time & session_toggle:
         st.info(f"Session expires in: {remaining_time}")
-    else:
-        st.error("Session expiration time is not available.")
 
     # Define sample questions
     sample_questions = [
