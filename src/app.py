@@ -12,7 +12,13 @@ st.title(title)
 
 UTC = timezone.utc
 
-
+hide_streamlit_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        </style>
+        """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # Safety Messaging
 safety_message = "X"
@@ -94,11 +100,22 @@ else:
     refresh_token_if_needed()
 
     col1, col2 = st.columns([1, 1])
+    st.write("Logged in with DeviceID: ", user_email)
+    st.markdown(
+        """
+        <style>
+        .clear-chat-button {
+            display: flex;
+            justify-content: flex-end;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
-    with col1:
-        st.write("Logged in with DeviceID: ", user_email)
-    with col2:
-        st.button("Clear Chat", on_click=clear_chat_history)
+    st.markdown('<div class="clear-chat-button">', unsafe_allow_html=True)
+    st.button("Clear Chat", on_click=clear_chat_history)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Display remaining session time
     remaining_time = get_remaining_session_time()
