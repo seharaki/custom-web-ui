@@ -47,20 +47,16 @@ else:
 
     if st.button("Refresh EntraID Token"):
         # If refresh token button is clicked or the token is expired, refresh the token
-        try:
-            token = oauth2.refresh_token(token, force=True)
-            # Put the refresh token in the session state as it is not returned by EntraID
-            if "refresh_token" not in token:
-                token["refresh_token"] = refresh_token
-            # Retrieve the Identity Center token
-            st.session_state.token = token
-            st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
-            st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
-            st.rerun()
-        except Exception as e:
-            st.error(f"Error refreshing token: {e}. Please log in again.")
-            del st.session_state["token"]
-            st.rerun()
+        token = oauth2.refresh_token(token, force=True)
+        # Put the refresh token in the session state as it is not returned by EntraID
+        if "refresh_token" not in token:
+            token["refresh_token"] = refresh_token
+        # Retrieve the Identity Center token
+        st.session_state.token = token
+        st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
+        st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
+        st.rerun()
+
 
     if "idc_jwt_token" not in st.session_state:
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
