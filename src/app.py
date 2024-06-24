@@ -58,7 +58,6 @@ else:
 
     if "idc_jwt_token" not in st.session_state:
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
-        st.warning(st.session_state["idc_jwt_token"])
         st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
     elif st.session_state["idc_jwt_token"]["expires_at"] < datetime.now(UTC):
         try:
@@ -66,7 +65,7 @@ else:
             st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
         except Exception as e:
             st.error(f"Error refreshing Identity Center token: {e}. Please reload the page.")
-
+    st.warning(st.session_state["idc_jwt_token"])
     col1, col2 = st.columns([1, 1])
 
     with col1:
