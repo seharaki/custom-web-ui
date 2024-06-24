@@ -31,10 +31,15 @@ def clear_chat_history():
 oauth2 = utils.configure_oauth_component()
 if "token" not in st.session_state:
     redirect_uri = f"https://{utils.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
-    result = oauth2.authorize_button("Start Chatting", scope="openid email", pkce="S256", redirect_uri=redirect_uri)
+    result = oauth2.authorize_button("Start Chatting", scope="openid email offline_access", pkce="S256", redirect_uri=redirect_uri)
     if result and "token" in result:
         # If authorization successful, save token in session state
         st.session_state.token = result.get("token")
+        # Store refresh token if available
+        if "refresh_token" in result["token"]:
+            st.session_state.refresh_token = result["token"]["refresh_token"]
+        else:
+            st.error("No refresh token received.")
         # Retrieve the Identity Center token
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(st.session_state.token["id_token"])
         st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + \
@@ -42,21 +47,34 @@ if "token" not in st.session_state:
         st.rerun()
 else:
     token = st.session_state.token
-    refresh_token = token.get("refresh_token")
+    refresh_token = st.session_state.get("refresh_token", token.get("refresh_token"))
+    if not refresh_token:
+        st.error("No refresh token available. Please log in again.")
+        del st.session_state["token"]
+        st.rerun()
+
     user_email = jwt.decode(token["id_token"], options={"verify_signature": False})["email"]
 
     if st.button("Refresh EntraID Token"):
         # If refresh token button is clicked or the token is expired, refresh the token
-        token = oauth2.refresh_token(token, force=True)
-        # Put the refresh token in the session state as it is not returned by EntraID
-        if "refresh_token" not in token:
-            token["refresh_token"] = refresh_token
-        # Retrieve the Identity Center token
-        st.session_state.token = token
-        st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
-        st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
-        st.rerun()
-
+        try:
+            token = oauth2.refresh_token(token, force=True)
+            # Store refresh token if available
+            if "refresh_token" in token:
+                st.session_state.refresh_token = token["refresh_token"]
+            else:
+                token["refresh_token"] = refresh_token
+            # Retrieve the Identity Center token
+            st.session_state.token = token
+            st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
+            st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error refreshing token: {e}. Please log in again.")
+            del st.session_state["token"]
+            if "refresh_token" in st.session_state:
+                del st.session_state["refresh_token"]
+            st.rerun()
 
     if "idc_jwt_token" not in st.session_state:
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"])
