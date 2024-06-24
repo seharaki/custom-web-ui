@@ -149,7 +149,9 @@ else:
                     st.session_state.user_prompt = question
                     st.session_state.messages.append({"role": "user", "content": question})
                     st.experimental_rerun()
-
+    # Add a horizontal line after the sample questions
+    st.markdown("<hr>", unsafe_allow_html=True)
+    
     if "messages" not in st.session_state:
         st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
 
