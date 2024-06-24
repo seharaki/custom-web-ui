@@ -105,7 +105,9 @@ else:
     sample_questions = [
         "This is sample question 1",
         "This is sample question 2",
-        "This is sample question 3"
+        "This is sample question 3",
+        "This is sample question 4",
+        "This is sample question 5"
     ]
 
     # Track which sample questions have been clicked
