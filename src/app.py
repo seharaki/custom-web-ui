@@ -3,19 +3,16 @@ import jwt
 import streamlit as st
 import utils
 
+# Title
+title = "X Virtual Operator Chatbot"
 
 # Page Configuration
-st.set_page_config(page_title="X Virtual Operator Chatbot", layout="wide")
+st.set_page_config(page_title=title, layout="wide")
+st.title(title)
 
 UTC = timezone.utc
 
-hide_streamlit_style = """
-        <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        </style>
-        """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 
 # Safety Messaging
 safety_message = "X"
