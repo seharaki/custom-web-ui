@@ -114,11 +114,11 @@ else:
  
     # Define sample questions
     sample_questions = [
-        "What do you do if warp is out of spec?",
-        "How do you perform a strike board check?",
-        "What is a single/module facer?",
-        "What is a double backer?",
-        "What is a roll stand?"
+        "What A",
+        "How B",
+        "What C",
+        "What D",
+        "What E"
     ]
  
     # Track which sample questions have been clicked
