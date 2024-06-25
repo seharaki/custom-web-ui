@@ -141,22 +141,22 @@ def get_qclient(idc_id_token: str, config:Config):
  
 # This code invoke chat_sync api and format the response for UI
 def get_queue_chain(
-    prompt_input, conversation_id, parent_message_id, token, AMAZON_Q_APP_ID:str, REGION:str, IAM_ROLE:str
+    prompt_input, conversation_id, parent_message_id, token, config
 ):
     """"
     This method is used to get the answer from the queue chain.
     """
-    amazon_q = get_qclient(token, REGION, IAM_ROLE)
+    amazon_q = get_qclient(token, config.REGION, config.IAM_ROLE)
     if conversation_id != "":
         answer = amazon_q.chat_sync(
-            applicationId=AMAZON_Q_APP_ID,
+            applicationId=config.AMAZON_Q_APP_ID,
             userMessage=prompt_input,
             conversationId=conversation_id,
             parentMessageId=parent_message_id,
         )
     else:
         answer = amazon_q.chat_sync(
-            applicationId=AMAZON_Q_APP_ID, userMessage=prompt_input
+            applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
         )
  
     system_message = answer.get("systemMessage", "")
