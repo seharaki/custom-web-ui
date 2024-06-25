@@ -247,7 +247,7 @@ Resources:
             "OAuthConfig": {
               "ClientId": "${ClientId}",
               "ExternalDns": "${Fqdn}",
-              "CognitoDomain" : "${Issuer}"
+              "Domain" : "${Issuer}"
             }
           }
         - Issuer:

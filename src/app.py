@@ -199,7 +199,7 @@ else:
                     st.session_state["conversationId"],
                     st.session_state["parentMessageId"],
                     st.session_state["idc_jwt_token"]["idToken"],
-                    config=config_agent
+                    config_agent
                 )
                 if "references" in response:
                     full_response = f"""{response["answer"]}\n\n---\n{response["references"]}"""
