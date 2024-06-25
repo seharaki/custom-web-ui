@@ -146,7 +146,7 @@ def get_queue_chain(
     """"
     This method is used to get the answer from the queue chain.
     """
-    amazon_q = get_qclient(token, config.REGION, config.IAM_ROLE)
+    amazon_q = get_qclient(token, config)
     if conversation_id != "":
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID,
