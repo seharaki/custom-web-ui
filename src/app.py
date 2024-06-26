@@ -82,6 +82,7 @@ if "token" not in st.session_state:
         else:
             st.error("No refresh token received.")
         # Retrieve the Identity Center token
+        st.warning(st.session_state.token["id_token"])
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(st.session_state.token["id_token"], config=config_agent)
         st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + \
             timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
