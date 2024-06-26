@@ -50,7 +50,7 @@ def get_remaining_session_time():
 def refresh_token_if_needed():
     if "idc_jwt_token" in st.session_state:
         remaining_time = get_remaining_session_time()
-        if remaining_time and remaining_time < timedelta(minutes=58):
+        if remaining_time and remaining_time < timedelta(minutes=59):
             try:
                 token = oauth2.refresh_token(st.session_state.token, force=True)
                 # Store refresh token if available
@@ -69,7 +69,7 @@ def refresh_token_if_needed():
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
     redirect_uri = f"https://{config_agent.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
-    result = oauth2.authorize_button("Start Chatting", scope="openid email", pkce="S256", redirect_uri=redirect_uri)
+    result = oauth2.authorize_button("Start Chatting", scope="openid email offline_access", pkce="S256", redirect_uri=redirect_uri)
     if result and "token" in result:
         # If authorization successful, save token in session state
         st.session_state.token = result.get("token")
