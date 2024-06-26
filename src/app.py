@@ -112,7 +112,8 @@ else:
     if remaining_time:
         if session_toggle:
             st.info(f"Session expires in: {remaining_time}")
- 
+    st.warning(st.session_state.token["id_token"])
+
     # Define sample questions
     sample_questions = [
         "What A",
