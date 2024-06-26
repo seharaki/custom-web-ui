@@ -64,10 +64,7 @@ def refresh_token_if_needed():
                 st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
             except Exception as e:
                 st.error(f"Error refreshing token: {e}. Refresh the page.")
-                del st.session_state["token"]
-                if "refresh_token" in st.session_state:
-                    del st.session_state["refresh_token"]
-                st.rerun()
+
  
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
