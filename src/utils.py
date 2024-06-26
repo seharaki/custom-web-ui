@@ -1,68 +1,87 @@
 import logging
 import os
- 
 import boto3
 import jwt
 import urllib3
+import json
 from datetime import datetime, timezone
 from collections import namedtuple
 from streamlit_oauth import OAuth2Component
- 
+
+# Initialize urllib3 PoolManager
+http = urllib3.PoolManager()
+
 logger = logging.getLogger()
- 
+
 # Add a file handler to write logs to a file
 file_handler = logging.FileHandler('/var/log/app.log')
 file_handler.setLevel(logging.INFO)
- 
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, handlers=[
     logging.FileHandler('/var/log/app.log'),
     logging.StreamHandler()
 ])
 logger = logging.getLogger(__name__)
- 
+
 # Read the configuration file
 APPCONFIG_APP_NAME = os.environ["APPCONFIG_APP_NAME"]
 APPCONFIG_ENV_NAME = os.environ["APPCONFIG_ENV_NAME"]
 APPCONFIG_CONF_NAME = os.environ["APPCONFIG_CONF_NAME"]
-AWS_CREDENTIALS = {}
 Config = namedtuple('Config', ['IAM_ROLE', 'REGION', 'IDC_APPLICATION_ID', 'AMAZON_Q_APP_ID', 'OAUTH_CONFIG'])
- 
+
 # Timezone
 UTC = timezone.utc
- 
+
+# Encapsulated AWS_CREDENTIALS
+def aws_credentials_manager():
+    aws_credentials = {}
+
+    def get_credentials():
+        return aws_credentials
+
+    def set_credentials(credentials):
+        nonlocal aws_credentials
+        aws_credentials = credentials
+
+    return get_credentials, set_credentials
+
+get_aws_credentials, set_aws_credentials = aws_credentials_manager()
+
 # Retrieve Config from Agent
 def retrieve_config_from_agent():
     """
     Retrieve the configuration from the agent
     """
-    config = urllib3.request(
+    response = http.request(
         "GET",
-        f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}",
-    ).json()
+        f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}"
+    )
+    config = response.data.decode('utf-8')
     logger.info(f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}")
     logger.info(f"The config in the method is {config}")
+    config = json.loads(config)
     IAM_ROLE = config["IamRoleArn"]
     REGION = config["Region"]
     IDC_APPLICATION_ID = config["IdcApplicationArn"]
     AMAZON_Q_APP_ID = config["AmazonQAppId"]
     OAUTH_CONFIG = config["OAuthConfig"]
-    response = Config(IAM_ROLE, REGION, IDC_APPLICATION_ID, AMAZON_Q_APP_ID, OAUTH_CONFIG)
-    return response
- 
-#DyanmoDb Configuration
+    return Config(IAM_ROLE, REGION, IDC_APPLICATION_ID, AMAZON_Q_APP_ID, OAUTH_CONFIG)
+
+# DynamoDb Configuration
 Q_TABLE_NAME = os.environ.get("Q_TABLE_NAME", "QBusinessAppVOA")
- 
-def configure_oauth_component(OAUTH_CONFIG:dict):
+
+def configure_oauth_component(OAUTH_CONFIG: dict):
     """
     Configure the OAuth2 component for Cognito
     """
     logger.info(f"The config in the oauth component is {OAUTH_CONFIG}")
-    idp_config = urllib3.request(
+    response = http.request(
         "GET",
-            f"{OAUTH_CONFIG['Domain']}/.well-known/openid-configuration"
-    ).json()
- 
+        f"{OAUTH_CONFIG['Domain']}/.well-known/openid-configuration"
+    )
+    idp_config = json.loads(response.data.decode('utf-8'))
+
     authorize_url = idp_config["authorization_endpoint"]
     token_url = idp_config["token_endpoint"]
     refresh_token_url = idp_config["token_endpoint"]
@@ -71,8 +90,8 @@ def configure_oauth_component(OAUTH_CONFIG:dict):
     return OAuth2Component(
         client_id, None, authorize_url, token_url, refresh_token_url, revoke_token_url
     )
- 
-def refresh_iam_oidc_token(refresh_token, config:Config):
+
+def refresh_iam_oidc_token(refresh_token, config: Config):
     """
     Refresh the IAM OIDC token using the refresh token retrieved from Cognito
     """
@@ -83,9 +102,8 @@ def refresh_iam_oidc_token(refresh_token, config:Config):
         refreshToken=refresh_token,
     )
     return response
- 
- 
-def get_iam_oidc_token(id_token, config:Config):
+
+def get_iam_oidc_token(id_token, config: Config):
     """
     Get the IAM OIDC token using the ID token retrieved from Cognito
     """
@@ -99,9 +117,8 @@ def get_iam_oidc_token(id_token, config:Config):
         assertion=id_token,
     )
     return response
- 
- 
-def assume_role_with_token(iam_token, config:Config):
+
+def assume_role_with_token(iam_token, config: Config):
     """
     Assume IAM role with the IAM OIDC idToken
     """
@@ -118,32 +135,30 @@ def assume_role_with_token(iam_token, config:Config):
         ],
     )
     return response
- 
- 
+
 # This method create the Q client
-def get_qclient(idc_id_token: str, config:Config):
+def get_qclient(idc_id_token: str, config: Config):
     """
     Create the Q client using the identity-aware AWS Session.
     """
-    if not AWS_CREDENTIALS or AWS_CREDENTIALS["Expiration"] < datetime.datetime.now(
-        datetime.timezone.utc
-    ):
+    aws_credentials = get_aws_credentials()
+    if not aws_credentials or aws_credentials["Expiration"] < datetime.now(UTC):
         response = assume_role_with_token(idc_id_token, config)
-        AWS_CREDENTIALS = response["Credentials"]
+        set_aws_credentials(response["Credentials"])
+        aws_credentials = get_aws_credentials()
     session = boto3.Session(
-        aws_access_key_id=AWS_CREDENTIALS["AccessKeyId"],
-        aws_secret_access_key=AWS_CREDENTIALS["SecretAccessKey"],
-        aws_session_token=AWS_CREDENTIALS["SessionToken"],
+        aws_access_key_id=aws_credentials["AccessKeyId"],
+        aws_secret_access_key=aws_credentials["SecretAccessKey"],
+        aws_session_token=aws_credentials["SessionToken"],
     )
     amazon_q = session.client("qbusiness", config.REGION)
     return amazon_q
- 
- 
+
 # This code invoke chat_sync api and format the response for UI
 def get_queue_chain(
     prompt_input, conversation_id, parent_message_id, token, config
 ):
-    """"
+    """
     This method is used to get the answer from the queue chain.
     """
     amazon_q = get_qclient(token, config)
@@ -158,7 +173,7 @@ def get_queue_chain(
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
         )
- 
+
     system_message = answer.get("systemMessage", "")
     conversation_id = answer.get("conversationId", "")
     parent_message_id = answer.get("systemMessageId", "")
@@ -167,11 +182,11 @@ def get_queue_chain(
         "conversationId": conversation_id,
         "parentMessageId": parent_message_id,
     }
- 
+
     if answer.get("sourceAttributions"):
         attributions = answer["sourceAttributions"]
         valid_attributions = []
- 
+
         # Generate the answer references extracting citation number,
         # the document title, and if present, the document url
         for attr in attributions:
@@ -185,12 +200,12 @@ def get_queue_chain(
                 attribution_text.append(f"Title: {title}")
             if url:
                 attribution_text.append(f", URL: {url}")
- 
+
             valid_attributions.append("".join(attribution_text))
- 
+
         concatenated_attributions = "\n\n".join(valid_attributions)
         result["references"] = concatenated_attributions
- 
+
         # Process the citation numbers and insert them into the system message
         citations = {}
         for attr in answer["sourceAttributions"]:
@@ -199,19 +214,19 @@ def get_queue_chain(
         offset_citations = sorted(citations.items(), key=lambda x: x[0])
         modified_message = ""
         prev_offset = 0
- 
+
         for offset, citation_number in offset_citations:
             modified_message += (
                 system_message[prev_offset:offset] + f"[{citation_number}]"
             )
             prev_offset = offset
- 
+
         modified_message += system_message[prev_offset:]
         result["answer"] = modified_message
- 
+
     return result
- 
-def store_feedback(user_email, conversation_id, parent_message_id, user_message, feedback, config:Config):
+
+def store_feedback(user_email, conversation_id, parent_message_id, user_message, feedback, config: Config):
     try:
         dynamodb = boto3.resource('dynamodb', region_name=config.REGION)
         qbusiness_table = dynamodb.Table(Q_TABLE_NAME)
@@ -228,8 +243,8 @@ def store_feedback(user_email, conversation_id, parent_message_id, user_message,
         logger.info("Feedback stored successfully")
     except Exception as e:
         logger.error(f"Error storing feedback: {e}")
- 
-def store_message_response(user_email, conversation_id, parent_message_id, user_message, response, config:Config):
+
+def store_message_response(user_email, conversation_id, parent_message_id, user_message, response, config: Config):
     try:
         dynamodb = boto3.resource('dynamodb', region_name=config.REGION)
         qbusiness_table = dynamodb.Table(Q_TABLE_NAME)
