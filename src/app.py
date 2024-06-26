@@ -60,7 +60,7 @@ def refresh_token_if_needed():
                     token["refresh_token"] = st.session_state.refresh_token
                 # Retrieve the Identity Center token
                 st.session_state.token = token
-                st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"], config=config_agent)
+                st.session_state["idc_jwt_token"] = utils.refresh_iam_oidc_token(token["id_token"], config=config_agent)
                 st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
             except Exception as e:
                 st.error(f"Error refreshing token: {e}. Refresh the page.")
