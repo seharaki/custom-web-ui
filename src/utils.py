@@ -11,17 +11,10 @@ from streamlit_oauth import OAuth2Component
 # Initialize urllib3 PoolManager
 http = urllib3.PoolManager()
 
-logger = logging.getLogger()
-
 # Add a file handler to write logs to a file
 file_handler = logging.FileHandler('/var/log/utils.log')
 file_handler.setLevel(logging.INFO)
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, handlers=[
-    logging.FileHandler('/var/log/utils.log'),
-    logging.StreamHandler()
-])
 logger = logging.getLogger(__name__)
 
 # Read the configuration file
