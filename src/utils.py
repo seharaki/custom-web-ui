@@ -112,7 +112,7 @@ def get_qclient(idc_id_token: str, config: Config):
     """
     if not st.session_state.aws_credentials:
         assume_role_with_token(idc_id_token, config)
-    elif st.session_state.aws_credentials["Expiration"] < datetime.datetime.now(datetime.UTC):
+    elif st.session_state.aws_credentials["Expiration"] < datetime.now(datetime.UTC):
         assume_role_with_token(idc_id_token, config)
 
     session = boto3.Session(

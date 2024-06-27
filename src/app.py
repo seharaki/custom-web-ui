@@ -116,7 +116,6 @@ else:
     if remaining_time:
         if session_toggle:
             st.info(f"Session expires in: {remaining_time}")
-    st.warning(st.session_state.token["id_token"])
 
     # Define sample questions
     sample_questions = [
@@ -202,7 +201,6 @@ else:
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 placeholder = st.empty()
-                st.warning(st.session_state["idc_jwt_token"]["idToken"])
                 response = utils.get_queue_chain(
                     st.session_state.user_prompt,
                     st.session_state["conversationId"],
