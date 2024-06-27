@@ -10,10 +10,11 @@ UTC=timezone.utc
 
 # Title
 title = "Virtual Assistant"
-st.title(title)
 
 # Page Styling Configuration
 st.set_page_config(page_title=title, layout="wide")
+
+st.title(title)
 
 # Hide Streamlit ... Menu
 hide_streamlit_style = """
