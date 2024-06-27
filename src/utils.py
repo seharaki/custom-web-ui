@@ -14,12 +14,12 @@ http = urllib3.PoolManager()
 logger = logging.getLogger()
 
 # Add a file handler to write logs to a file
-file_handler = logging.FileHandler('/var/log/app.log')
+file_handler = logging.FileHandler('/var/log/utils.log')
 file_handler.setLevel(logging.INFO)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, handlers=[
-    logging.FileHandler('/var/log/app.log'),
+    logging.FileHandler('/var/log/utils.log'),
     logging.StreamHandler()
 ])
 logger = logging.getLogger(__name__)
