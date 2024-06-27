@@ -161,6 +161,7 @@ def get_queue_chain(
     """
     This method is used to get the answer from the queue chain.
     """
+    logger.info(f"This is the q chain token {token}")
     amazon_q = get_qclient(token, config)
     if conversation_id != "":
         answer = amazon_q.chat_sync(
