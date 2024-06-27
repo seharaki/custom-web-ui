@@ -120,6 +120,7 @@ def assume_role_with_token(iam_token, config: Config):
     Assume IAM role with the IAM OIDC idToken
     """
     decoded_token = jwt.decode(iam_token, options={"verify_signature": False})
+    logger.info("f Decoded token: {decoded_token}")
     sts_client = boto3.client("sts", region_name=config.REGION)
     response = sts_client.assume_role(
         RoleArn=config.IAM_ROLE,
