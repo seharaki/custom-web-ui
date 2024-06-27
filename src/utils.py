@@ -77,7 +77,7 @@ def get_iam_oidc_token(id_token, config: Config):
     """
     Get the IAM OIDC token using the ID token retrieved from Cognito
     """
-    client = boto3.client("sso-oidc", region_name=REGION)
+    client = boto3.client("sso-oidc", region_name=config.REGION)
     response = client.create_token_with_iam(
         clientId=config.IDC_APPLICATION_ID,
         grantType="urn:ietf:params:oauth:grant-type:jwt-bearer",
