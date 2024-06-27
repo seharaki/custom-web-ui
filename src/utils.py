@@ -1,127 +1,105 @@
+import datetime
 import logging
 import os
+
 import boto3
 import jwt
+import streamlit as st
 import urllib3
-import json
-from datetime import datetime, timezone
-from collections import namedtuple
 from streamlit_oauth import OAuth2Component
 
-# Initialize urllib3 PoolManager
-http = urllib3.PoolManager()
-
-# Set up logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-# Add a file handler to write logs to a file
-file_handler = logging.FileHandler('/var/log/utils.log')
-file_handler.setLevel(logging.INFO)
-
-# Add the handlers to the logger
-logger.addHandler(file_handler)
+logger = logging.getLogger()
 
 # Read the configuration file
 APPCONFIG_APP_NAME = os.environ["APPCONFIG_APP_NAME"]
 APPCONFIG_ENV_NAME = os.environ["APPCONFIG_ENV_NAME"]
 APPCONFIG_CONF_NAME = os.environ["APPCONFIG_CONF_NAME"]
-Config = namedtuple('Config', ['IAM_ROLE', 'REGION', 'IDC_APPLICATION_ID', 'AMAZON_Q_APP_ID', 'OAUTH_CONFIG'])
+AMAZON_Q_APP_ID = None
+IAM_ROLE = None
+REGION = None
+IDC_APPLICATION_ID = None
+OAUTH_CONFIG = {}
+APP_VERSION = 1
 
-# Timezone
-UTC = timezone.utc
 
-# Encapsulated AWS_CREDENTIALS
-def aws_credentials_manager():
-    aws_credentials = {}
-
-    def get_credentials():
-        return aws_credentials
-
-    def set_credentials(credentials):
-        nonlocal aws_credentials
-        aws_credentials = credentials
-
-    return get_credentials, set_credentials
-
-get_aws_credentials, set_aws_credentials = aws_credentials_manager()
-
-# Retrieve Config from Agent
 def retrieve_config_from_agent():
     """
     Retrieve the configuration from the agent
     """
-    response = http.request(
+    global IAM_ROLE, REGION, IDC_APPLICATION_ID, AMAZON_Q_APP_ID, OAUTH_CONFIG, APP_VERSION
+    config = urllib3.request(
         "GET",
-        f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}"
-    )
-    config = response.data.decode('utf-8')
-    logger.info(f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}")
-    logger.info(f"The config in the method is {config}")
-    config = json.loads(config)
+        f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}",
+    ).json()
     IAM_ROLE = config["IamRoleArn"]
     REGION = config["Region"]
     IDC_APPLICATION_ID = config["IdcApplicationArn"]
     AMAZON_Q_APP_ID = config["AmazonQAppId"]
     OAUTH_CONFIG = config["OAuthConfig"]
-    return Config(IAM_ROLE, REGION, IDC_APPLICATION_ID, AMAZON_Q_APP_ID, OAUTH_CONFIG)
+    APP_VERSION = config.get("AppVersion",2)
 
-# DynamoDb Configuration
-Q_TABLE_NAME = os.environ.get("Q_TABLE_NAME", "QBusinessAppVOA")
 
-def configure_oauth_component(OAUTH_CONFIG: dict):
+def configure_oauth_component():
     """
     Configure the OAuth2 component for Cognito
     """
-    logger.info(f"The config in the oauth component is {OAUTH_CONFIG}")
-    response = http.request(
-        "GET",
-        f"{OAUTH_CONFIG['Domain']}/.well-known/openid-configuration"
-    )
-    idp_config = json.loads(response.data.decode('utf-8'))
+    if APP_VERSION == 1:
+        cognito_domain = OAUTH_CONFIG["CognitoDomain"]
+        authorize_url = f"https://{cognito_domain}/oauth2/authorize"
+        token_url = f"https://{cognito_domain}/oauth2/token"
+        refresh_token_url = f"https://{cognito_domain}/oauth2/token"
+        revoke_token_url = f"https://{cognito_domain}/oauth2/revoke"
+        client_id = OAUTH_CONFIG["ClientId"]
+    if APP_VERSION == 2:
+        idp_config = urllib3.request(
+            "GET",
+                f"{OAUTH_CONFIG['CognitoDomain']}/.well-known/openid-configuration"
+        ).json()
 
-    authorize_url = idp_config["authorization_endpoint"]
-    token_url = idp_config["token_endpoint"]
-    refresh_token_url = idp_config["token_endpoint"]
-    revoke_token_url = idp_config.get("revocation_endpoint")
-    client_id = OAUTH_CONFIG["ClientId"]
+        authorize_url = idp_config["authorization_endpoint"]
+        token_url = idp_config["token_endpoint"]
+        refresh_token_url = idp_config["token_endpoint"]
+        revoke_token_url = idp_config.get("revocation_endpoint")
+        client_id = OAUTH_CONFIG["ClientId"]
     return OAuth2Component(
         client_id, None, authorize_url, token_url, refresh_token_url, revoke_token_url
     )
 
-def refresh_iam_oidc_token(refresh_token, config: Config):
+
+def refresh_iam_oidc_token(refresh_token):
     """
     Refresh the IAM OIDC token using the refresh token retrieved from Cognito
     """
-    client = boto3.client("sso-oidc", region_name=config.REGION)
+    client = boto3.client("sso-oidc", region_name=REGION)
     response = client.create_token_with_iam(
-        clientId=config.IDC_APPLICATION_ID,
+        clientId=IDC_APPLICATION_ID,
         grantType="refresh_token",
         refreshToken=refresh_token,
     )
     return response
 
-def get_iam_oidc_token(id_token, config: Config):
+
+def get_iam_oidc_token(id_token):
     """
     Get the IAM OIDC token using the ID token retrieved from Cognito
     """
-    client = boto3.client("sso-oidc", region_name=config.REGION)
+    client = boto3.client("sso-oidc", region_name=REGION)
     response = client.create_token_with_iam(
-        clientId=config.IDC_APPLICATION_ID,
+        clientId=IDC_APPLICATION_ID,
         grantType="urn:ietf:params:oauth:grant-type:jwt-bearer",
         assertion=id_token,
     )
     return response
 
-def assume_role_with_token(iam_token, config: Config):
+
+def assume_role_with_token(iam_token):
     """
     Assume IAM role with the IAM OIDC idToken
     """
     decoded_token = jwt.decode(iam_token, options={"verify_signature": False})
-    logger.info(f"Decoded token: {decoded_token}")
-    sts_client = boto3.client("sts", region_name=config.REGION)
+    sts_client = boto3.client("sts", region_name=REGION)
     response = sts_client.assume_role(
-        RoleArn=config.IAM_ROLE,
+        RoleArn=IAM_ROLE,
         RoleSessionName="qapp",
         ProvidedContexts=[
             {
@@ -130,44 +108,46 @@ def assume_role_with_token(iam_token, config: Config):
             }
         ],
     )
-    return response
+    st.session_state.aws_credentials = response["Credentials"]
+
 
 # This method create the Q client
-def get_qclient(idc_id_token: str, config: Config):
+def get_qclient(idc_id_token: str):
     """
     Create the Q client using the identity-aware AWS Session.
     """
-    aws_credentials = get_aws_credentials()
-    if not aws_credentials or aws_credentials["Expiration"] < datetime.now(UTC):
-        response = assume_role_with_token(idc_id_token, config)
-        set_aws_credentials(response["Credentials"])
-        aws_credentials = get_aws_credentials()
+    if not st.session_state.aws_credentials:
+        assume_role_with_token(idc_id_token)
+    elif st.session_state.aws_credentials["Expiration"] < datetime.datetime.now(datetime.UTC):
+        assume_role_with_token(idc_id_token)
+
     session = boto3.Session(
-        aws_access_key_id=aws_credentials["AccessKeyId"],
-        aws_secret_access_key=aws_credentials["SecretAccessKey"],
-        aws_session_token=aws_credentials["SessionToken"],
+        aws_access_key_id=st.session_state.aws_credentials["AccessKeyId"],
+        aws_secret_access_key=st.session_state.aws_credentials["SecretAccessKey"],
+        aws_session_token=st.session_state.aws_credentials["SessionToken"],
     )
-    amazon_q = session.client("qbusiness", config.REGION)
+    amazon_q = session.client("qbusiness", REGION)
     return amazon_q
+
 
 # This code invoke chat_sync api and format the response for UI
 def get_queue_chain(
-    prompt_input, conversation_id, parent_message_id, token, config
+    prompt_input, conversation_id, parent_message_id, token
 ):
-    """
+    """"
     This method is used to get the answer from the queue chain.
     """
-    amazon_q = get_qclient(token, config)
+    amazon_q = get_qclient(token)
     if conversation_id != "":
         answer = amazon_q.chat_sync(
-            applicationId=config.AMAZON_Q_APP_ID,
+            applicationId=AMAZON_Q_APP_ID,
             userMessage=prompt_input,
             conversationId=conversation_id,
             parentMessageId=parent_message_id,
         )
     else:
         answer = amazon_q.chat_sync(
-            applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
+            applicationId=AMAZON_Q_APP_ID, userMessage=prompt_input
         )
 
     system_message = answer.get("systemMessage", "")
@@ -221,39 +201,3 @@ def get_queue_chain(
         result["answer"] = modified_message
 
     return result
-
-def store_feedback(user_email, conversation_id, parent_message_id, user_message, feedback, config: Config):
-    try:
-        dynamodb = boto3.resource('dynamodb', region_name=config.REGION)
-        qbusiness_table = dynamodb.Table(Q_TABLE_NAME)
-        qbusiness_table.put_item(
-            Item={
-                'UserId': user_email,
-                'ConversationId': conversation_id,
-                'ParentMessageId': parent_message_id,
-                'UserMessage': user_message,
-                'Feedback': feedback,
-                'Timestamp': datetime.now(tz=UTC).isoformat()
-            }
-        )
-        logger.info("Feedback stored successfully")
-    except Exception as e:
-        logger.error(f"Error storing feedback: {e}")
-
-def store_message_response(user_email, conversation_id, parent_message_id, user_message, response, config: Config):
-    try:
-        dynamodb = boto3.resource('dynamodb', region_name=config.REGION)
-        qbusiness_table = dynamodb.Table(Q_TABLE_NAME)
-        qbusiness_table.put_item(
-            Item={
-                'UserId': user_email,
-                'ConversationId': conversation_id,
-                'ParentMessageId': parent_message_id,
-                'UserMessage': user_message,
-                'Response': response,
-                'Timestamp': datetime.now(tz=UTC).isoformat()
-            }
-        )
-        logger.info("Message and response stored successfully")
-    except Exception as e:
-        logger.error(f"Error storing message and response: {e}")
