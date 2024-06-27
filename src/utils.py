@@ -107,9 +107,6 @@ def get_iam_oidc_token(id_token, config: Config):
     """
     Get the IAM OIDC token using the ID token retrieved from Cognito
     """
-    logger.info(f"Current id_token: {id_token}")
-    logger.info(f"Current config: {config}")
-    logger.info(f"Current IDC_APPLICATION_ID: {config.IDC_APPLICATION_ID}")
     client = boto3.client("sso-oidc", region_name=config.REGION)
     response = client.create_token_with_iam(
         clientId=config.IDC_APPLICATION_ID,
@@ -161,7 +158,6 @@ def get_queue_chain(
     """
     This method is used to get the answer from the queue chain.
     """
-    logger.info(f"This is the q chain token {token}")
     amazon_q = get_qclient(token, config)
     if conversation_id != "":
         answer = amazon_q.chat_sync(

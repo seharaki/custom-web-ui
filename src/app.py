@@ -196,6 +196,7 @@ else:
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 placeholder = st.empty()
+                st.warning(f"This is the q chain token {st.session_state["idc_jwt_token"]["idToken"]}")
                 response = utils.get_queue_chain(
                     st.session_state.user_prompt,
                     st.session_state["conversationId"],
