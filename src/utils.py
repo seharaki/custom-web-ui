@@ -44,7 +44,7 @@ def configure_oauth_component():
     Configure the OAuth2 component for Cognito
     """
     if APP_VERSION == 1:
-        cognito_domain = OAUTH_CONFIG["CognitoDomain"]
+        cognito_domain = OAUTH_CONFIG["Domain"]
         authorize_url = f"https://{cognito_domain}/oauth2/authorize"
         token_url = f"https://{cognito_domain}/oauth2/token"
         refresh_token_url = f"https://{cognito_domain}/oauth2/token"
@@ -53,7 +53,7 @@ def configure_oauth_component():
     if APP_VERSION == 2:
         idp_config = urllib3.request(
             "GET",
-                f"{OAUTH_CONFIG['CognitoDomain']}/.well-known/openid-configuration"
+                f"{OAUTH_CONFIG['Domain']}/.well-known/openid-configuration"
         ).json()
 
         authorize_url = idp_config["authorization_endpoint"]
