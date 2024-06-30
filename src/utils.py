@@ -131,8 +131,10 @@ def get_queue_chain(
     """"
     This method is used to get the answer from the queue chain.
     """
+    st.warning("Creating Q Client")
     amazon_q = get_qclient(token, config)
     if conversation_id != "":
+        st.warning(f"Current conv id: {conversation_id}")
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID,
             userMessage=prompt_input,
@@ -140,10 +142,11 @@ def get_queue_chain(
             parentMessageId=parent_message_id,
         )
     else:
+        st.warning(f"No conv id")
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
         )
-
+        st.warning("Answer returned")
     system_message = answer.get("systemMessage", "")
     conversation_id = answer.get("conversationId", "")
     parent_message_id = answer.get("systemMessageId", "")
