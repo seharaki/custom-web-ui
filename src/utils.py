@@ -149,6 +149,7 @@ def get_queue_chain(
         st.warning("Answer returned")
     system_message = answer.get("systemMessage", "")
     conversation_id = answer.get("conversationId", "")
+    st.warning(f"Conv id from the Q answer {conversation_id}")
     parent_message_id = answer.get("systemMessageId", "")
     result = {
         "answer": system_message,
