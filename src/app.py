@@ -214,8 +214,8 @@ else:
                 else:
                     full_response = f"""{response["answer"]}\n\n---\nNo sources"""
                 placeholder.markdown(full_response)
-                #st.session_state["conversationId"] = response["conversationId"]
-                st.warning(f"Post queue chain conversation id: {st.session_state['conversationId']}")
+                st.session_state["conversationId"] = response["conversationId"]
+                #st.warning(f"Post queue chain conversation id: {st.session_state['conversationId']}")
                 st.session_state["parentMessageId"] = response["parentMessageId"]
  
             st.session_state.messages.append({"role": "assistant", "content": full_response})
