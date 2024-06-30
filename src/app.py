@@ -201,7 +201,7 @@ else:
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 placeholder = st.empty()
-                st.warning(f"Pre queue chain conversation id: {st.session_state["conversationId"]}")
+                st.warning(f"Pre queue chain conversation id: {st.session_state['conversationId']}")
                 response = utils.get_queue_chain(
                     st.session_state.user_prompt,
                     st.session_state["conversationId"],
@@ -215,7 +215,7 @@ else:
                     full_response = f"""{response["answer"]}\n\n---\nNo sources"""
                 placeholder.markdown(full_response)
                 st.session_state["conversationId"] = response["conversationId"]
-                st.warning(f"Post queue chain conversation id: {st.session_state["conversationId"]}")
+                st.warning(f"Post queue chain conversation id: {st.session_state['conversationId']}")
                 st.session_state["parentMessageId"] = response["parentMessageId"]
  
             st.session_state.messages.append({"role": "assistant", "content": full_response})
