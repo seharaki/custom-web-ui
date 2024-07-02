@@ -22,8 +22,8 @@ hide_streamlit_style = """
         footer {visibility: hidden;}
         .fixed-button {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 120px;  /* Adjusted to move the button down by 100px */
+            right: 20px;  /* Ensure the button is fully visible */
             z-index: 1000;
             background-color: #4CAF50; /* Green */
             border: none;
@@ -52,19 +52,9 @@ config_agent = utils.retrieve_config_from_agent()
 if "aws_credentials" not in st.session_state:
     st.session_state.aws_credentials = None
 
-clear_chat_js = """
-    <script>
-    function clearChat() {
-        const clearButton = document.querySelector('.fixed-button');
-        clearButton.addEventListener('click', function() {
-            // Notify Streamlit that the clear button was clicked
-            window.location.href = window.location.href.split('?')[0] + '?clear_chat=1';
-        });
-    }
-    document.addEventListener("DOMContentLoaded", clearChat);
-    </script>
-    """
-st.markdown(clear_chat_js, unsafe_allow_html=True)
+
+# Inject CSS to style the button
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # Define a function to clear the chat history
 def clear_chat_history():
@@ -139,12 +129,11 @@ else:
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
-        st.markdown(
-            """
-            <button class="fixed-button">Clear Chat</button>
-            """,
-            unsafe_allow_html=True
-        )
+        # Add a placeholder for the button to apply the CSS class
+        placeholder = st.empty()
+        with placeholder:
+            if st.button("Clear Chat", key="clear_chat"):
+                clear_chat_history()
 
         # Display remaining session time
     remaining_time = get_remaining_session_time()
