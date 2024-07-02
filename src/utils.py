@@ -228,9 +228,10 @@ def store_message_response(user_email, conversation_id, parent_message_id, user_
                 'ConversationId': conversation_id,
                 'ParentMessageId': parent_message_id,
                 'UserMessage': user_message,
-                'Response': response,
-                'Timestamp': datetime.now(tz=UTC).isoformat(),
-                'Duration': response.get('duration', 0)
+                'Response': response["answer"],
+                'References': response.get("references", ""),
+                'Duration': response["duration"],
+                'Timestamp': datetime.now(tz=UTC).isoformat()
             }
         )
         logger.info("Message and response stored successfully")

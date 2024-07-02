@@ -9,7 +9,7 @@ from streamlit_feedback import streamlit_feedback
 UTC = timezone.utc
 
 # Title
-title = "X"
+title = "a"
 
 # Page Styling Configuration
 st.set_page_config(page_title=title, layout="wide")
@@ -26,41 +26,15 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # Safety Messaging
-safety_message = 'X'
+safety_message = '''a'''
 
 # Show Session Time
-session_toggle = False
+session_toggle = True
 
 # Init configuration
 config_agent = utils.retrieve_config_from_agent()
 if "aws_credentials" not in st.session_state:
     st.session_state.aws_credentials = None
-
-# Initialize session state variables
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "clicked_samples" not in st.session_state:
-    st.session_state.clicked_samples = []
-if "conversationId" not in st.session_state:
-    st.session_state.conversationId = ""
-if "parentMessageId" not in st.session_state:
-    st.session_state.parentMessageId = ""
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "questions" not in st.session_state:
-    st.session_state.questions = []
-if "answers" not in st.session_state:
-    st.session_state.answers = []
-if "input" not in st.session_state:
-    st.session_state.input = ""
-if "user_prompt" not in st.session_state:
-    st.session_state.user_prompt = ""
-if "show_feedback" not in st.session_state:
-    st.session_state.show_feedback = False
-if "show_feedback_success" not in st.session_state:
-    st.session_state.show_feedback_success = False
-if "response_processing" not in st.session_state:
-    st.session_state.response_processing = False
 
 # Define a function to clear the chat history
 def clear_chat_history():
@@ -130,15 +104,13 @@ if "token" not in st.session_state:
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(st.session_state.token["id_token"], config=config_agent)
         st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + \
             timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
-        st.rerun()
 else:
     token = st.session_state["token"]
-    refresh_token = token.get("refresh_token")  # saving the long lived refresh_token
+    refresh_token = token.get("refresh_token") # saving the long lived refresh_token
     user_email = jwt.decode(token["id_token"], options={"verify_signature": False})["email"]
     if not refresh_token:
         st.error("No refresh token available. Please log in again.")
         del st.session_state["token"]
-        st.rerun()
 
     # Automatic token refresh
     refresh_token_if_needed()
@@ -147,11 +119,10 @@ else:
 
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
+    with col2:
+        st.button("Clear Chat", on_click=clear_chat_history)
 
-    if "messages" not in st.session_state or not st.session_state.messages:
-        st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
-
-    # Display remaining session time
+        # Display remaining session time
     remaining_time = get_remaining_session_time()
     if remaining_time:
         if session_toggle:
@@ -159,96 +130,119 @@ else:
 
     # Define sample questions
     sample_questions = [
-        "What A",
-        "What B",
-        "What C",
-        "What D",
-        "What E"
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
     ]
 
-    # Display sample question buttons
-    st.markdown(
-        """
-        <style>
-        .faq-title {
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 20px; /* Adjust the value as needed */
-        }
-        </style>
-        <div class="faq-title">Frequently Asked Questions</div>
-        """,
-        unsafe_allow_html=True
-    )
-    cols = st.columns(len(sample_questions))
-    for idx, question in enumerate(sample_questions):
-        cols[idx].button(
-            question,
-            key=question,
-            disabled=st.session_state.response_processing,
-            help="Click to ask this question",
-            on_click=lambda q=question: ask_question(q)
-        )
+    # Track which sample questions have been clicked
+    if "clicked_samples" not in st.session_state:
+        st.session_state.clicked_samples = []
 
-def ask_question(question):
-    st.session_state.clicked_samples.append(question)
-    st.session_state.user_prompt = question
-    st.session_state.messages.append({"role": "user", "content": question})
-    st.session_state.response_processing = True
-
-# Add a horizontal line after the sample questions
-st.markdown("<hr>", unsafe_allow_html=True)
-
-# Display the chat messages
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.write(message["content"])
-
-# User-provided prompt
-if prompt := st.chat_input(key="chat_input"):
-    st.session_state.user_prompt = prompt
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.write(prompt)
-    st.session_state["show_feedback"] = False
-    st.session_state.response_processing = True
-
-if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
-    with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            placeholder = st.empty()
-            response = utils.get_queue_chain(
-                st.session_state.user_prompt,
-                st.session_state["conversationId"],
-                st.session_state["parentMessageId"],
-                st.session_state["idc_jwt_token"]["idToken"],
-                config_agent
+    # Display sample question buttons if they haven't been clicked yet
+    if token:
+        remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
+        if remaining_questions:
+            st.markdown(
+                """
+                <style>
+                .faq-title {
+                    text-align: center;
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin-bottom: 20px; /* Adjust the value as needed */
+                }
+                </style>
+                <div class="faq-title">Frequently Asked Questions</div>
+                """,
+                unsafe_allow_html=True
             )
-            if "references" in response:
-                full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
-            else:
-                full_response = f"""{response["answer"]}\n\n---\nNo sources"""
-            placeholder.markdown(full_response)
-            st.session_state["conversationId"] = response["conversationId"]
-            st.session_state["parentMessageId"] = response["parentMessageId"]
+            cols = st.columns(len(remaining_questions))
+            for idx, question in enumerate(remaining_questions):
+                if cols[idx].button(question, key=question, help="Click to ask this question", use_container_width=True):
+                    st.session_state.clicked_samples.append(question)
+                    st.session_state.user_prompt = question
+                    st.session_state.messages.append({"role": "user", "content": question})
 
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
-        utils.store_message_response(
-            user_email=user_email,
-            conversation_id=st.session_state["conversationId"],
-            parent_message_id=st.session_state["parentMessageId"],
-            user_message=st.session_state.user_prompt,
-            response=full_response,
-            config=config_agent
-        )
-        st.session_state["show_feedback"] = True
-        st.session_state["show_feedback_success"] = False
-        st.session_state.response_processing = False
-        st.warning(safety_message, icon="🚨")
-        st.experimental_rerun()  # Re-run the script to re-enable buttons
+    # Add a horizontal line after the sample questions
+    st.markdown("<hr>", unsafe_allow_html=True)
 
-if st.session_state.show_feedback:
+    # Initialize the chat messages in the session state if it doesn't exist
+    if "messages" not in st.session_state:
+        st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
+
+    if "conversationId" not in st.session_state:
+        st.session_state["conversationId"] = ""
+
+    if "parentMessageId" not in st.session_state:
+        st.session_state["parentMessageId"] = ""
+
+    if "chat_history" not in st.session_state:
+        st.session_state["chat_history"] = []
+
+    if "questions" not in st.session_state:
+        st.session_state.questions = []
+
+    if "answers" not in st.session_state:
+        st.session_state.answers = []
+
+    if "input" not in st.session_state:
+        st.session_state.input = ""
+
+    if "user_prompt" not in st.session_state:
+        st.session_state.user_prompt = ""
+
+    # Display the chat messages
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
+
+    # User-provided prompt
+    if prompt := st.chat_input(key="chat_input"):
+        st.session_state.user_prompt = prompt
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.write(prompt)
+        st.session_state["show_feedback"] = False
+
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                placeholder = st.empty()
+                response = utils.get_queue_chain(
+                    st.session_state.user_prompt,
+                    st.session_state["conversationId"],
+                    st.session_state["parentMessageId"],
+                    st.session_state["idc_jwt_token"]["idToken"],
+                    config_agent
+                )
+                if "references" in response:
+                    full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
+                else:
+                    full_response = f"""{response["answer"]}\n\n---\nNo sources"""
+                placeholder.markdown(full_response)
+                st.session_state["conversationId"] = response["conversationId"]
+                st.session_state["parentMessageId"] = response["parentMessageId"]
+
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            utils.store_message_response(
+                user_email=user_email,
+                conversation_id=st.session_state["conversationId"],
+                parent_message_id=st.session_state["parentMessageId"],
+                user_message=st.session_state.user_prompt,
+                response=response,
+                config=config_agent
+            )
+            st.session_state["show_feedback"] = True
+            st.session_state["show_feedback_success"] = False
+            st.warning(safety_message, icon="🚨")
+
+if "show_feedback" not in st.session_state:
+    st.session_state["show_feedback"] = False
+
+if st.session_state["show_feedback"]:
     col1, col2, _ = st.columns([1, 1, 10])
     feedback_type = None
     if col1.button("👍", key="thumbs_up"):
@@ -304,7 +298,7 @@ if st.session_state.show_feedback:
                 st.session_state["show_feedback_success"] = True
                 st.experimental_rerun()
 
-if st.session_state.show_feedback_success:
+if st.session_state["show_feedback_success"]:
     st.success("Thank you for your feedback!")
 
 # Ensure the clear chat button remains visible at the bottom of the response only after authentication
