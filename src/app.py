@@ -131,9 +131,11 @@ else:
     with col2:
         # Add a placeholder for the button to apply the CSS class
         placeholder = st.empty()
-        with placeholder:
+        with placeholder.container():
+            st.markdown('<div class="fixed-button">', unsafe_allow_html=True)
             if st.button("Clear Chat", key="clear_chat"):
                 clear_chat_history()
+            st.markdown('</div>', unsafe_allow_html=True)
 
         # Display remaining session time
     remaining_time = get_remaining_session_time()
