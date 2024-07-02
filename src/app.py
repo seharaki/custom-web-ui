@@ -16,7 +16,6 @@ st.set_page_config(page_title=title, layout="wide")
 
 st.title(title)
 
-# Hide Streamlit ... Menu
 hide_streamlit_style = """
         <style>
         #MainMenu {visibility: hidden;}
@@ -26,6 +25,17 @@ hide_streamlit_style = """
             top: 10px;
             right: 10px;
             z-index: 1000;
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 8px;
         }
         </style>
         """
@@ -115,8 +125,12 @@ else:
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
-        st.button("Clear Chat", on_click=clear_chat_history, key="clear_chat", css_class="fixed-button")
-
+        st.markdown(
+            """
+            <button class="fixed-button" onclick="window.location.reload()">Clear Chat</button>
+            """,
+            unsafe_allow_html=True
+        )
 
         # Display remaining session time
     remaining_time = get_remaining_session_time()
