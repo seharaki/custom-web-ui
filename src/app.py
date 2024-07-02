@@ -181,7 +181,7 @@ else:
         """,
         unsafe_allow_html=True
     )
-    cols = st.columns(len(sample_questions))
+    cols = st.columns(2)
     for idx, question in enumerate(sample_questions):
         cols[idx].button(
             question,
