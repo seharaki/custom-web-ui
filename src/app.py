@@ -48,24 +48,23 @@ with header:
 st.markdown(
     """
 <style>
-    div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
+    .fixed-header-container {
         position: sticky;
         top: 2.875rem;
-        background-color: white;
         z-index: 999;
-        padding: 1rem;
+        padding: 0.5rem 1rem; /* Adjust padding for thinner header */
+        background-color: #1e3d58; /* Match the blue bar color */
         display: flex;
         justify-content: space-between;
         align-items: center;
+        border-bottom: 1px solid #1e3d58;
+        height: 40px; /* Set height to a thinner value */
     }
-    .fixed-header {
-        border-bottom: 1px solid black;
-        padding-bottom: 1rem;
+    .fixed-header-container .user-info {
+        color: white; /* White text color for contrast */
+        font-size: 16px; /* Adjust font size */
     }
-    .fixed-header .user-info {
-        margin-right: auto;
-    }
-    .fixed-header button {
+    .fixed-header-container .clear-chat-button button {
         background-color: #4CAF50; /* Green */
         border: none;
         color: white;
@@ -73,13 +72,12 @@ st.markdown(
         font-size: 16px;
         cursor: pointer;
         border-radius: 8px;
-        height: 38px; /* Adjust button height */
+        height: 30px; /* Adjust button height */
     }
 </style>
     """,
     unsafe_allow_html=True
 )
-
 
 def get_remaining_session_time():
     if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
@@ -144,7 +142,7 @@ else:
     with header:
         st.markdown(
             f"""
-            <div class='fixed-header'>
+            <div class='fixed-header-container'>
                 <div class='user-info'>Logged in with DeviceID: {user_email}</div>
                 <div class='clear-chat-button'>{st.button("Clear Chat", on_click=clear_chat_history)}</div>
             </div>
