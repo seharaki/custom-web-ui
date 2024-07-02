@@ -246,7 +246,7 @@ if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
 
 if st.session_state["show_feedback"]:
-    col1, col2, col3 = st.columns([1, 1, 10])
+    col1, col2, _ = st.columns([1, 1, 10])
     feedback_type = None
     if col1.button("👍", key="thumbs_up"):
         feedback_type = "👍 Thumbs Up"
@@ -266,9 +266,6 @@ if st.session_state["show_feedback"]:
     if col2.button("👎", key="thumbs_down"):
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
-
-    if col3.button("Clear Chat", on_click=clear_chat_history):
-        pass
 
     additional_feedback = ""
 
@@ -306,3 +303,7 @@ if st.session_state["show_feedback"]:
 
 if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
     st.success("Thank you for your feedback!")
+
+# Ensure the clear chat button remains visible at the bottom of the response
+if st.session_state.messages:
+    st.button("Clear Chat", on_click=clear_chat_history)
