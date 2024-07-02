@@ -36,6 +36,30 @@ config_agent = utils.retrieve_config_from_agent()
 if "aws_credentials" not in st.session_state:
     st.session_state.aws_credentials = None
 
+# Initialize session state variables
+if "messages" not in st.session_state:
+    st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
+if "clicked_samples" not in st.session_state:
+    st.session_state.clicked_samples = []
+if "conversationId" not in st.session_state:
+    st.session_state.conversationId = ""
+if "parentMessageId" not in st.session_state:
+    st.session_state.parentMessageId = ""
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+if "questions" not in st.session_state:
+    st.session_state.questions = []
+if "answers" not in st.session_state:
+    st.session_state.answers = []
+if "input" not in st.session_state:
+    st.session_state.input = ""
+if "user_prompt" not in st.session_state:
+    st.session_state.user_prompt = ""
+if "show_feedback" not in st.session_state:
+    st.session_state.show_feedback = False
+if "show_feedback_success" not in st.session_state:
+    st.session_state.show_feedback_success = False
+
 # Define a function to clear the chat history
 def clear_chat_history():
     st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
@@ -172,31 +196,6 @@ else:
     # Add a horizontal line after the sample questions
     st.markdown("<hr>", unsafe_allow_html=True)
 
-    # Initialize the chat messages in the session state if it doesn't exist
-    if "messages" not in st.session_state:
-        st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
-
-    if "conversationId" not in st.session_state:
-        st.session_state["conversationId"] = ""
-
-    if "parentMessageId" not in st.session_state:
-        st.session_state["parentMessageId"] = ""
-
-    if "chat_history" not in st.session_state:
-        st.session_state["chat_history"] = []
-
-    if "questions" not in st.session_state:
-        st.session_state.questions = []
-
-    if "answers" not in st.session_state:
-        st.session_state.answers = []
-
-    if "input" not in st.session_state:
-        st.session_state.input = ""
-
-    if "user_prompt" not in st.session_state:
-        st.session_state.user_prompt = ""
-
     # Display the chat messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -242,10 +241,7 @@ else:
             st.session_state["show_feedback_success"] = False
             st.warning(safety_message, icon="🚨")
 
-if "show_feedback" not in st.session_state:
-    st.session_state["show_feedback"] = False
-
-if st.session_state["show_feedback"]:
+if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
     feedback_type = None
     if col1.button("👍", key="thumbs_up"):
@@ -301,7 +297,7 @@ if st.session_state["show_feedback"]:
                 st.session_state["show_feedback_success"] = True
                 st.experimental_rerun()
 
-if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
+if st.session_state.show_feedback_success:
     st.success("Thank you for your feedback!")
 
 # Ensure the clear chat button remains visible at the bottom of the response
