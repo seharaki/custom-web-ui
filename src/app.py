@@ -133,10 +133,10 @@ else:
     # Define sample questions
     sample_questions = [
         "What A",
-        "What A",
-        "What A",
-        "What A",
-        "What A"
+        "What B",
+        "What C",
+        "What D",
+        "What E"
     ]
 
     # Track which sample questions have been clicked
