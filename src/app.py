@@ -25,17 +25,6 @@ hide_streamlit_style = """
             top: 120px;  /* Adjusted to move the button down by 100px */
             right: 20px;  /* Ensure the button is fully visible */
             z-index: 1000;
-            background-color: #4CAF50; /* Green */
-            border: none;
-            color: white;
-            padding: 15px 32px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
-            border-radius: 8px;
         }
         </style>
         """
@@ -131,11 +120,10 @@ else:
     with col2:
         # Add a placeholder for the button to apply the CSS class
         placeholder = st.empty()
-        with placeholder.container():
-            st.markdown('<div class="fixed-button">', unsafe_allow_html=True)
-            if st.button("Clear Chat", key="clear_chat"):
-                clear_chat_history()
-            st.markdown('</div>', unsafe_allow_html=True)
+        placeholder.markdown('<div class="fixed-button">', unsafe_allow_html=True)
+        if placeholder.button("Clear Chat", key="clear_chat"):
+            clear_chat_history()
+        placeholder.markdown('</div>', unsafe_allow_html=True)
 
         # Display remaining session time
     remaining_time = get_remaining_session_time()
