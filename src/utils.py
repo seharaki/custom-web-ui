@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 import time
+from decimal import Decimal
 
 import boto3
 import jwt
@@ -154,7 +155,7 @@ def get_queue_chain(
         "answer": system_message,
         "conversationId": conversation_id,
         "parentMessageId": parent_message_id,
-        "duration": duration
+        "duration": Decimal(duration)  # Convert duration to Decimal
     }
 
     if answer.get("sourceAttributions"):
@@ -234,6 +235,6 @@ def store_message_response(user_email, conversation_id, parent_message_id, user_
                 'Timestamp': datetime.now(tz=UTC).isoformat()
             }
         )
-        st.warning("Message and response stored successfully")
+        logger.info("Message and response stored successfully")
     except Exception as e:
-        st.warning(f"Error storing message and response: {e}")
+        logger.error(f"Error storing message and response: {e}")
