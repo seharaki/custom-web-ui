@@ -44,25 +44,26 @@ with header:
     if st.button("Clear Chat", key="clear_chat"):
         clear_chat_history()
 
+# Custom CSS for the sticky header
 st.markdown(
     """
 <style>
-    .fixed-header-container {
+    div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
         position: sticky;
         top: 2.875rem;
+        background-color: white;
         z-index: 999;
         padding: 1rem;
-        background-color: #1e3d58; /* Match the blue bar color */
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid #1e3d58;
-        height: 48px; /* Adjust height to match the blue bar */
     }
     .fixed-header {
-        display: flex;
-        align-items: center;
-        color: white; /* White text color for contrast */
+        border-bottom: 1px solid black;
+        padding-bottom: 1rem;
+    }
+    .fixed-header .user-info {
+        margin-right: auto;
     }
     .fixed-header button {
         background-color: #4CAF50; /* Green */
@@ -78,6 +79,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 def get_remaining_session_time():
     if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
@@ -138,15 +140,17 @@ else:
     refresh_token_if_needed()
 
     # Create a sticky header container
-    st.markdown(
-        f"""
-        <div class="fixed-header-container">
-            <div class="fixed-header">Logged in with DeviceID: {user_email}</div>
-            <div class="fixed-header"><button onclick="window.location.href=window.location.href">Clear Chat</button></div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    header = st.container()
+    with header:
+        st.markdown(
+            f"""
+            <div class='fixed-header'>
+                <div class='user-info'>Logged in with DeviceID: {user_email}</div>
+                <div class='clear-chat-button'>{st.button("Clear Chat", on_click=clear_chat_history)}</div>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
 
         # Display remaining session time
     remaining_time = get_remaining_session_time()
