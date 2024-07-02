@@ -38,7 +38,7 @@ if "aws_credentials" not in st.session_state:
 
 # Initialize session state variables
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
+    st.session_state.messages = []
 if "clicked_samples" not in st.session_state:
     st.session_state.clicked_samples = []
 if "conversationId" not in st.session_state:
@@ -147,8 +147,9 @@ else:
 
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
-    with col2:
-        pass  # Remove the "Clear Chat" button from here
+
+    if "messages" not in st.session_state or not st.session_state.messages:
+        st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
 
     # Display remaining session time
     remaining_time = get_remaining_session_time()
@@ -165,42 +166,36 @@ else:
         "What E"
     ]
 
-    # Track which sample questions have been clicked
-    if "clicked_samples" not in st.session_state:
-        st.session_state.clicked_samples = []
-
-    # Display sample question buttons if they haven't been clicked yet
-    if token:
-        st.markdown(
-            """
-            <style>
-            .faq-title {
-                text-align: center;
-                font-size: 16px;
-                font-weight: bold;
-                margin-bottom: 20px; /* Adjust the value as needed */
-            }
-            </style>
-            <div class="faq-title">Frequently Asked Questions</div>
-            """,
-            unsafe_allow_html=True
+    # Display sample question buttons
+    st.markdown(
+        """
+        <style>
+        .faq-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px; /* Adjust the value as needed */
+        }
+        </style>
+        <div class="faq-title">Frequently Asked Questions</div>
+        """,
+        unsafe_allow_html=True
+    )
+    cols = st.columns(len(sample_questions))
+    for idx, question in enumerate(sample_questions):
+        cols[idx].button(
+            question,
+            key=question,
+            disabled=st.session_state.response_processing,
+            help="Click to ask this question",
+            on_click=lambda q=question: ask_question(q)
         )
-        cols = st.columns(len(sample_questions))
-        for idx, question in enumerate(sample_questions):
-            cols[idx].button(
-                question,
-                key=question,
-                disabled=st.session_state.response_processing,
-                help="Click to ask this question",
-                on_click=lambda q=question: ask_question(q)
-            )
 
 def ask_question(question):
     st.session_state.clicked_samples.append(question)
     st.session_state.user_prompt = question
     st.session_state.messages.append({"role": "user", "content": question})
     st.session_state.response_processing = True
-    st.rerun()
 
 # Add a horizontal line after the sample questions
 st.markdown("<hr>", unsafe_allow_html=True)
