@@ -16,19 +16,32 @@ st.set_page_config(page_title=title, layout="wide")
 
 st.title(title)
 
-hide_streamlit_style = """
-        <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        .fixed-button-container {
-            position: fixed;
-            top: 120px;  /* Adjusted to move the button down by 100px */
-            right: 20px;  /* Ensure the button is fully visible */
-            z-index: 1000;
-        }
-        </style>
-        """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+# Create a sticky header container
+header = st.container()
+with header:
+    st.markdown("<div class='fixed-header'></div>", unsafe_allow_html=True)
+    if st.button("Clear Chat", key="clear_chat"):
+        clear_chat_history()
+
+# Custom CSS for the sticky header
+st.markdown(
+    """
+<style>
+    div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
+        position: sticky;
+        top: 2.875rem;
+        background-color: white;
+        z-index: 999;
+        padding: 1rem;
+    }
+    .fixed-header {
+        border-bottom: 1px solid black;
+        padding-bottom: 1rem;
+    }
+</style>
+    """,
+    unsafe_allow_html=True
+)
 
 # Safety Messaging
 safety_message = "X"
@@ -117,19 +130,6 @@ else:
  
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
-    
-    # Create a placeholder for the button
-    button_placeholder = st.empty()
-    with button_placeholder.container():
-        if st.button("Clear Chat", key="clear_chat"):
-            clear_chat_history()
-    
-    # Inject the fixed button container with the existing button
-    st.markdown("""
-        <div class="fixed-button-container">
-            <button onclick="window.location.href=window.location.href">Clear Chat</button>
-        </div>
-        """, unsafe_allow_html=True)
 
         # Display remaining session time
     remaining_time = get_remaining_session_time()
