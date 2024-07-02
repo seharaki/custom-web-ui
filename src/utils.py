@@ -234,6 +234,6 @@ def store_message_response(user_email, conversation_id, parent_message_id, user_
                 'Timestamp': datetime.now(tz=UTC).isoformat()
             }
         )
-        logger.info("Message and response stored successfully")
+        st.warning("Message and response stored successfully")
     except Exception as e:
-        logger.error(f"Error storing message and response: {e}")
+        st.warning(f"Error storing message and response: {e}")
