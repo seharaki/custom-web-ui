@@ -20,7 +20,7 @@ hide_streamlit_style = """
         <style>
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
-        .fixed-button {
+        .fixed-button-container {
             position: fixed;
             top: 120px;  /* Adjusted to move the button down by 100px */
             right: 20px;  /* Ensure the button is fully visible */
@@ -117,13 +117,19 @@ else:
  
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
-    with col2:
-        # Add a placeholder for the button to apply the CSS class
-        placeholder = st.empty()
-        placeholder.markdown('<div class="fixed-button">', unsafe_allow_html=True)
-        if placeholder.button("Clear Chat", key="clear_chat"):
+    
+    # Create a placeholder for the button
+    button_placeholder = st.empty()
+    with button_placeholder.container():
+        if st.button("Clear Chat", key="clear_chat"):
             clear_chat_history()
-        placeholder.markdown('</div>', unsafe_allow_html=True)
+    
+    # Inject the fixed button container with the existing button
+    st.markdown("""
+        <div class="fixed-button-container">
+            <button onclick="window.location.href=window.location.href">Clear Chat</button>
+        </div>
+        """, unsafe_allow_html=True)
 
         # Display remaining session time
     remaining_time = get_remaining_session_time()
