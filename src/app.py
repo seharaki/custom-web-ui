@@ -246,7 +246,7 @@ if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
 
 if st.session_state["show_feedback"]:
-    col1, col2, col3 = st.columns([1, 1, 1])
+    col1, col2, col3 = st.columns([1, 1, 10])
     feedback_type = None
     if col1.button("👍", key="thumbs_up"):
         feedback_type = "👍 Thumbs Up"
@@ -259,13 +259,13 @@ if st.session_state["show_feedback"]:
             feedback={"type": feedback_type},
             config=config_agent
         )
-        st.session_state["show_feedback"] = True
+        st.session_state["show_feedback"] = False
+        st.session_state["feedback_type"] = ""
+        st.session_state["show_feedback_success"] = True
         st.experimental_rerun()
     if col2.button("👎", key="thumbs_down"):
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
-        st.session_state["feedback_reason"] = ""
-        st.session_state["additional_feedback"] = ""
 
     if col3.button("Clear Chat", on_click=clear_chat_history):
         pass
@@ -297,7 +297,7 @@ if st.session_state["show_feedback"]:
                     feedback={"type": st.session_state["feedback_type"], "reason": feedback_details},
                     config=config_agent
                 )
-                st.session_state["show_feedback"] = True
+                st.session_state["show_feedback"] = False
                 st.session_state["feedback_type"] = ""
                 st.session_state["feedback_reason"] = ""
                 st.session_state["additional_feedback"] = ""
@@ -306,6 +306,3 @@ if st.session_state["show_feedback"]:
 
 if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
     st.success("Thank you for your feedback!")
-
-    # Ensure the clear chat button remains visible
-    col3.button("Clear Chat", on_click=clear_chat_history)
