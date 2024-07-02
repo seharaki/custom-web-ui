@@ -171,81 +171,87 @@ else:
 
     # Display sample question buttons if they haven't been clicked yet
     if token:
-        remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
-        if remaining_questions:
-            st.markdown(
-                """
-                <style>
-                .faq-title {
-                    text-align: center;
-                    font-size: 16px;
-                    font-weight: bold;
-                    margin-bottom: 20px; /* Adjust the value as needed */
-                }
-                </style>
-                <div class="faq-title">Frequently Asked Questions</div>
-                """,
-                unsafe_allow_html=True
+        st.markdown(
+            """
+            <style>
+            .faq-title {
+                text-align: center;
+                font-size: 16px;
+                font-weight: bold;
+                margin-bottom: 20px; /* Adjust the value as needed */
+            }
+            </style>
+            <div class="faq-title">Frequently Asked Questions</div>
+            """,
+            unsafe_allow_html=True
+        )
+        cols = st.columns(len(sample_questions))
+        for idx, question in enumerate(sample_questions):
+            cols[idx].button(
+                question,
+                key=question,
+                disabled=st.session_state.response_processing,
+                help="Click to ask this question",
+                on_click=lambda q=question: ask_question(q)
             )
-            cols = st.columns(len(remaining_questions))
-            for idx, question in enumerate(remaining_questions):
-                if cols[idx].button(question, key=question, disabled=st.session_state.response_processing, help="Click to ask this question", use_container_width=True):
-                    st.session_state.clicked_samples.append(question)
-                    st.session_state.user_prompt = question
-                    st.session_state.messages.append({"role": "user", "content": question})
-                    st.session_state.response_processing = True
-                    st.rerun()
 
-    # Add a horizontal line after the sample questions
-    st.markdown("<hr>", unsafe_allow_html=True)
+def ask_question(question):
+    st.session_state.clicked_samples.append(question)
+    st.session_state.user_prompt = question
+    st.session_state.messages.append({"role": "user", "content": question})
+    st.session_state.response_processing = True
+    st.rerun()
 
-    # Display the chat messages
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.write(message["content"])
+# Add a horizontal line after the sample questions
+st.markdown("<hr>", unsafe_allow_html=True)
 
-    # User-provided prompt
-    if prompt := st.chat_input(key="chat_input"):
-        st.session_state.user_prompt = prompt
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.write(prompt)
-        st.session_state["show_feedback"] = False
-        st.session_state.response_processing = True
+# Display the chat messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.write(message["content"])
 
-    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                placeholder = st.empty()
-                response = utils.get_queue_chain(
-                    st.session_state.user_prompt,
-                    st.session_state["conversationId"],
-                    st.session_state["parentMessageId"],
-                    st.session_state["idc_jwt_token"]["idToken"],
-                    config_agent
-                )
-                if "references" in response:
-                    full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
-                else:
-                    full_response = f"""{response["answer"]}\n\n---\nNo sources"""
-                placeholder.markdown(full_response)
-                st.session_state["conversationId"] = response["conversationId"]
-                st.session_state["parentMessageId"] = response["parentMessageId"]
+# User-provided prompt
+if prompt := st.chat_input(key="chat_input"):
+    st.session_state.user_prompt = prompt
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.write(prompt)
+    st.session_state["show_feedback"] = False
+    st.session_state.response_processing = True
 
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            utils.store_message_response(
-                user_email=user_email,
-                conversation_id=st.session_state["conversationId"],
-                parent_message_id=st.session_state["parentMessageId"],
-                user_message=st.session_state.user_prompt,
-                response=full_response,
-                config=config_agent
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            placeholder = st.empty()
+            response = utils.get_queue_chain(
+                st.session_state.user_prompt,
+                st.session_state["conversationId"],
+                st.session_state["parentMessageId"],
+                st.session_state["idc_jwt_token"]["idToken"],
+                config_agent
             )
-            st.session_state["show_feedback"] = True
-            st.session_state["show_feedback_success"] = False
-            st.session_state.response_processing = False
-            st.warning(safety_message, icon="🚨")
-            st.experimental_rerun()  # Re-run the script to re-enable buttons
+            if "references" in response:
+                full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
+            else:
+                full_response = f"""{response["answer"]}\n\n---\nNo sources"""
+            placeholder.markdown(full_response)
+            st.session_state["conversationId"] = response["conversationId"]
+            st.session_state["parentMessageId"] = response["parentMessageId"]
+
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
+        utils.store_message_response(
+            user_email=user_email,
+            conversation_id=st.session_state["conversationId"],
+            parent_message_id=st.session_state["parentMessageId"],
+            user_message=st.session_state.user_prompt,
+            response=full_response,
+            config=config_agent
+        )
+        st.session_state["show_feedback"] = True
+        st.session_state["show_feedback_success"] = False
+        st.session_state.response_processing = False
+        st.warning(safety_message, icon="🚨")
+        st.experimental_rerun()  # Re-run the script to re-enable buttons
 
 if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
