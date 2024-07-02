@@ -1,32 +1,34 @@
 from datetime import datetime, timedelta, timezone
-
 import jwt
-import jwt.algorithms
-import streamlit as st  #all streamlit commands will be available through the "st" alias
+import streamlit as st
 import utils
-from streamlit_feedback import streamlit_feedback
-
-UTC=timezone.utc
-
+ 
 # Title
 title = "Virtual Assistant"
-
-# Page Styling Configuration
+ 
+# Page Configuration
 st.set_page_config(page_title=title, layout="wide")
-
 st.title(title)
-
+ 
+# Init configuration
+config_agent = utils.retrieve_config_from_agent()
+ 
+UTC = timezone.utc
+ 
+hide_streamlit_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        </style>
+        """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+ 
 # Safety Messaging
 safety_message = "X"
  
 # Show Session Time
-session_toggle = False
-
-# Init configuration
-config_agent = utils.retrieve_config_from_agent()
-if "aws_credentials" not in st.session_state:
-    st.session_state.aws_credentials = None
-
+session_toggle = True
+ 
 # Define a function to clear the chat history
 def clear_chat_history():
     st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
@@ -36,49 +38,8 @@ def clear_chat_history():
     st.session_state["chat_history"] = []
     st.session_state["conversationId"] = ""
     st.session_state["parentMessageId"] = ""
-
-# Create a sticky header container
-header = st.container()
-with header:
-    st.markdown("<div class='fixed-header'></div>", unsafe_allow_html=True)
-    if st.button("Clear Chat", key="clear_chat"):
-        clear_chat_history()
-
-# Custom CSS for the sticky header
-st.markdown(
-    """
-<style>
-    .fixed-header-container {
-        position: sticky;
-        top: 2.875rem;
-        z-index: 999;
-        padding: 0.5rem 1rem; /* Adjust padding for thinner header */
-        background-color: #1e3d58; /* Match the blue bar color */
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #1e3d58;
-        height: 40px; /* Set height to a thinner value */
-    }
-    .fixed-header-container .user-info {
-        color: white; /* White text color for contrast */
-        font-size: 16px; /* Adjust font size */
-    }
-    .fixed-header-container .clear-chat-button button {
-        background-color: #4CAF50; /* Green */
-        border: none;
-        color: white;
-        padding: 5px 10px;
-        font-size: 16px;
-        cursor: pointer;
-        border-radius: 8px;
-        height: 30px; /* Adjust button height */
-    }
-</style>
-    """,
-    unsafe_allow_html=True
-)
-
+    st.session_state["user_prompt"] = ""  # Initialize user prompt
+ 
 def get_remaining_session_time():
     if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
         expires_at = st.session_state["idc_jwt_token"]["expires_at"]
@@ -99,7 +60,7 @@ def refresh_token_if_needed():
                     token["refresh_token"] = st.session_state.refresh_token
                 # Retrieve the Identity Center token
                 st.session_state.token = token
-                st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"], config_agent)
+                st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"], config=config_agent)
                 st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
             except Exception as e:
                 st.error(f"Error refreshing token: {e}. Refresh the page.")
@@ -107,7 +68,7 @@ def refresh_token_if_needed():
                 if "refresh_token" in st.session_state:
                     del st.session_state["refresh_token"]
                 st.rerun()
-
+ 
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
     redirect_uri = f"https://{config_agent.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
@@ -121,40 +82,34 @@ if "token" not in st.session_state:
         else:
             st.error("No refresh token received.")
         # Retrieve the Identity Center token
+        st.warning(st.session_state.token["id_token"])
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(st.session_state.token["id_token"], config=config_agent)
         st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + \
             timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
         st.rerun()
 else:
-    token = st.session_state["token"]
-    refresh_token = token.get("refresh_token") # saving the long lived refresh_token
+    token = st.session_state.token
+    refresh_token = st.session_state.get("refresh_token", token.get("refresh_token"))
     user_email = jwt.decode(token["id_token"], options={"verify_signature": False})["email"]
     if not refresh_token:
         st.error("No refresh token available. Please log in again.")
         del st.session_state["token"]
         st.rerun()
- 
+
     # Automatic token refresh
     refresh_token_if_needed()
 
-    # Create a sticky header container
-    header = st.container()
-    with header:
-        st.markdown(
-            f"""
-            <div class='fixed-header-container'>
-                <div class='user-info'>Logged in with DeviceID: {user_email}</div>
-                <div class='clear-chat-button'>{st.button("Clear Chat", on_click=clear_chat_history)}</div>
-            </div>
-            """, 
-            unsafe_allow_html=True
-        )
+    col1, col2 = st.columns([1, 3])
 
-        # Display remaining session time
+    with col1:
+        st.write("Logged in with DeviceID: ", user_email)
+    
+    # Display remaining session time
     remaining_time = get_remaining_session_time()
     if remaining_time:
         if session_toggle:
             st.info(f"Session expires in: {remaining_time}")
+    st.warning(st.session_state.token["id_token"])
 
     # Define sample questions
     sample_questions = [
@@ -164,11 +119,11 @@ else:
         "What D",
         "What E"
     ]
- 
+
     # Track which sample questions have been clicked
     if "clicked_samples" not in st.session_state:
         st.session_state.clicked_samples = []
- 
+
     # Display sample question buttons if they haven't been clicked yet
     if token:
         remaining_questions = [q for q in sample_questions if q not in st.session_state.clicked_samples]
@@ -197,7 +152,6 @@ else:
     # Add a horizontal line after the sample questions
     st.markdown("<hr>", unsafe_allow_html=True)
 
-    # Initialize the chat messages in the session state if it doesn't exist
     if "messages" not in st.session_state:
         st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
 
@@ -227,20 +181,19 @@ else:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-
-    # User-provided prompt
+    # Handle user input from the chat input box
     if prompt := st.chat_input(key="chat_input"):
         st.session_state.user_prompt = prompt
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.write(prompt)
         st.session_state["show_feedback"] = False
- 
+
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 placeholder = st.empty()
-                st.warning(f"Pre queue chain conversation id: {st.session_state['conversationId']}")
+                st.warning(st.session_state["idc_jwt_token"]["idToken"])
                 response = utils.get_queue_chain(
                     st.session_state.user_prompt,
                     st.session_state["conversationId"],
@@ -254,9 +207,8 @@ else:
                     full_response = f"""{response["answer"]}\n\n---\nNo sources"""
                 placeholder.markdown(full_response)
                 st.session_state["conversationId"] = response["conversationId"]
-                st.warning(f"Post queue chain conversation id: {st.session_state['conversationId']}")
                 st.session_state["parentMessageId"] = response["parentMessageId"]
- 
+
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             utils.store_message_response(
                 user_email=user_email,
@@ -269,12 +221,12 @@ else:
             st.session_state["show_feedback"] = True
             st.session_state["show_feedback_success"] = False
             st.warning(safety_message, icon="🚨")
- 
+
 if "show_feedback" not in st.session_state:
     st.session_state["show_feedback"] = False
- 
+
 if st.session_state["show_feedback"]:
-    col1, col2, _ = st.columns([1, 1, 10])
+    col1, col2, col3 = st.columns([1, 1, 1])
     feedback_type = None
     if col1.button("👍", key="thumbs_up"):
         feedback_type = "👍 Thumbs Up"
@@ -294,9 +246,9 @@ if st.session_state["show_feedback"]:
     if col2.button("👎", key="thumbs_down"):
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
- 
+
     additional_feedback = ""
- 
+
     if st.session_state.get("feedback_type") == "👎 Thumbs Down":
         feedback_reason = st.selectbox(
             "Please select the reason for your feedback:",
@@ -305,7 +257,7 @@ if st.session_state["show_feedback"]:
         )
         if feedback_reason == "Other":
             additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback_input")
- 
+
         if st.button("Submit Feedback", key="submit_feedback_button"):
             if feedback_reason == "Other" and not additional_feedback:
                 st.warning("Please provide additional feedback for 'Other'.")
@@ -313,7 +265,7 @@ if st.session_state["show_feedback"]:
                 feedback_details = feedback_reason
                 if additional_feedback:
                     feedback_details = additional_feedback
- 
+
                 utils.store_feedback(
                     user_email=user_email,
                     conversation_id=st.session_state["conversationId"],
@@ -328,6 +280,9 @@ if st.session_state["show_feedback"]:
                 st.session_state["additional_feedback"] = ""
                 st.session_state["show_feedback_success"] = True
                 st.experimental_rerun()
- 
+
+    with col3:
+        st.button("Clear Chat", on_click=clear_chat_history)
+
 if "show_feedback_success" in st.session_state and st.session_state["show_feedback_success"]:
-    st.success("Thank you for your feedback!")
+        st.success("Thank you for your feedback!")
