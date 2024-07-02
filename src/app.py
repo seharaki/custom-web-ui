@@ -20,7 +20,7 @@ st.title(title)
 safety_message = "X"
  
 # Show Session Time
-session_toggle = True
+session_toggle = False
 
 # Init configuration
 config_agent = utils.retrieve_config_from_agent()
@@ -44,41 +44,40 @@ with header:
     if st.button("Clear Chat", key="clear_chat"):
         clear_chat_history()
 
-# Custom CSS for the sticky header
-hide_streamlit_style = """
-        <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        .fixed-header-container {
-            position: sticky;
-            top: 2.875rem;
-            z-index: 999;
-            padding: 1rem;
-            background-color: #1e3d58; /* Match the blue bar color */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #1e3d58;
-        }
-        .fixed-header {
-            height: 48px; /* Adjust height to match the blue bar */
-            display: flex;
-            align-items: center;
-            color: white; /* White text color for contrast */
-        }
-        .fixed-header button {
-            background-color: #4CAF50; /* Green */
-            border: none;
-            color: white;
-            padding: 5px 10px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 8px;
-            height: 38px; /* Adjust button height */
-        }
-    </style>
+st.markdown(
     """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+<style>
+    .fixed-header-container {
+        position: sticky;
+        top: 2.875rem;
+        z-index: 999;
+        padding: 1rem;
+        background-color: #1e3d58; /* Match the blue bar color */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #1e3d58;
+        height: 48px; /* Adjust height to match the blue bar */
+    }
+    .fixed-header {
+        display: flex;
+        align-items: center;
+        color: white; /* White text color for contrast */
+    }
+    .fixed-header button {
+        background-color: #4CAF50; /* Green */
+        border: none;
+        color: white;
+        padding: 5px 10px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 8px;
+        height: 38px; /* Adjust button height */
+    }
+</style>
+    """,
+    unsafe_allow_html=True
+)
 
 def get_remaining_session_time():
     if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
@@ -143,12 +142,11 @@ else:
         f"""
         <div class="fixed-header-container">
             <div class="fixed-header">Logged in with DeviceID: {user_email}</div>
-            <div class="fixed-header"><button onclick="window.location.reload()">Clear Chat</button></div>
+            <div class="fixed-header"><button onclick="window.location.href=window.location.href">Clear Chat</button></div>
         </div>
         """,
         unsafe_allow_html=True
     )
-
 
         # Display remaining session time
     remaining_time = get_remaining_session_time()
