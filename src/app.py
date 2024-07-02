@@ -117,7 +117,7 @@ else:
     # Automatic token refresh
     refresh_token_if_needed()
 
-    col1, col2 = st.columns([1, 3])
+    col1, col2 = st.columns([1, 7])
 
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
