@@ -54,10 +54,6 @@ config_agent = utils.retrieve_config_from_agent()
 if "aws_credentials" not in st.session_state:
     st.session_state.aws_credentials = None
 
-
-# Inject CSS to style the button
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
 # Define a function to clear the chat history
 def clear_chat_history():
     st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
