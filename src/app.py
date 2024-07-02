@@ -59,6 +59,8 @@ if "show_feedback" not in st.session_state:
     st.session_state.show_feedback = False
 if "show_feedback_success" not in st.session_state:
     st.session_state.show_feedback_success = False
+if "response_processing" not in st.session_state:
+    st.session_state.response_processing = False
 
 # Define a function to clear the chat history
 def clear_chat_history():
@@ -187,10 +189,11 @@ else:
             )
             cols = st.columns(len(remaining_questions))
             for idx, question in enumerate(remaining_questions):
-                if cols[idx].button(question, key=question, help="Click to ask this question", use_container_width=True):
+                if cols[idx].button(question, key=question, disabled=st.session_state.response_processing, help="Click to ask this question", use_container_width=True):
                     st.session_state.clicked_samples.append(question)
                     st.session_state.user_prompt = question
                     st.session_state.messages.append({"role": "user", "content": question})
+                    st.session_state.response_processing = True
                     st.rerun()
 
     # Add a horizontal line after the sample questions
@@ -208,6 +211,7 @@ else:
         with st.chat_message("user"):
             st.write(prompt)
         st.session_state["show_feedback"] = False
+        st.session_state.response_processing = True
 
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
         with st.chat_message("assistant"):
@@ -239,6 +243,7 @@ else:
             )
             st.session_state["show_feedback"] = True
             st.session_state["show_feedback_success"] = False
+            st.session_state.response_processing = False
             st.warning(safety_message, icon="🚨")
 
 if st.session_state.show_feedback:
