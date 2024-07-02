@@ -22,8 +22,8 @@ hide_streamlit_style = """
         footer {visibility: hidden;}
         .fixed-button {
             position: fixed;
-            top: 10px;
-            right: 10px;
+            top: 20px;  /* Adjusted to ensure the button is fully visible */
+            right: 20px;  /* Adjusted to ensure the button is fully visible */
             z-index: 1000;
             background-color: #4CAF50; /* Green */
             border: none;
@@ -51,6 +51,20 @@ session_toggle = True
 config_agent = utils.retrieve_config_from_agent()
 if "aws_credentials" not in st.session_state:
     st.session_state.aws_credentials = None
+
+# JavaScript to call the Streamlit function
+clear_chat_js = """
+    <script>
+    function clearChat() {
+        const clearButton = document.querySelector('.fixed-button');
+        clearButton.addEventListener('click', function() {
+            Streamlit.setComponentValue("clear");
+        });
+    }
+    document.addEventListener("DOMContentLoaded", clearChat);
+    </script>
+    """
+components.html(clear_chat_js)
 
 # Define a function to clear the chat history
 def clear_chat_history():
@@ -127,7 +141,7 @@ else:
     with col2:
         st.markdown(
             """
-            <button class="fixed-button" onclick="window.location.reload()">Clear Chat</button>
+            <button class="fixed-button">Clear Chat</button>
             """,
             unsafe_allow_html=True
         )
