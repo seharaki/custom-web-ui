@@ -52,17 +52,23 @@ st.markdown(
         position: sticky;
         top: 2.875rem;
         z-index: 999;
-        padding: 1rem;
+        padding: 0.5rem;  /* Reduced padding */
+        background-color: inherit; /* Match the background color */
     }
     .fixed-header {
         border-bottom: 1px solid black;
-        padding-bottom: 1rem;
+        padding-bottom: 0.5rem; /* Reduced padding */
+        height: 20px; /* Set height to 20px */
+        display: flex;
+        align-items: center; /* Center items vertically */
+    }
+    .stButton button {
+        height: 20px; /* Adjust button height to match the header */
     }
 </style>
     """,
     unsafe_allow_html=True
 )
-
 def get_remaining_session_time():
     if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
         expires_at = st.session_state["idc_jwt_token"]["expires_at"]
