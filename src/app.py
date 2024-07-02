@@ -159,11 +159,11 @@ else:
 
     # Define sample questions
     sample_questions = [
-        "What A",
-        "What B",
-        "What C",
-        "What D",
-        "What E"
+        "What is the cool thing about A",
+        "What is the cool thing about B",
+        "What is the cool thing about C",
+        "What is the cool thing about D",
+        "What is the cool thing about E"
     ]
 
     # Display sample question buttons
@@ -181,13 +181,13 @@ else:
         """,
         unsafe_allow_html=True
     )
-    cols = st.columns(2)
+    cols = st.columns(len(sample_questions))
     for idx, question in enumerate(sample_questions):
         cols[idx].button(
             question,
             key=question,
             disabled=st.session_state.response_processing,
-            help="Click to ask this question",
+            help="Click to ask",
             on_click=lambda q=question: ask_question(q)
         )
 
