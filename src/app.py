@@ -21,6 +21,12 @@ hide_streamlit_style = """
         <style>
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
+        .fixed-button {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
         </style>
         """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
@@ -109,7 +115,8 @@ else:
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
-        st.button("Clear Chat", on_click=clear_chat_history)
+        st.button("Clear Chat", on_click=clear_chat_history, key="clear_chat", css_class="fixed-button")
+
 
         # Display remaining session time
     remaining_time = get_remaining_session_time()
