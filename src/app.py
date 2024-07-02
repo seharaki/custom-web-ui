@@ -22,8 +22,8 @@ hide_streamlit_style = """
         footer {visibility: hidden;}
         .fixed-button {
             position: fixed;
-            top: 20px;  /* Adjusted to ensure the button is fully visible */
-            right: 20px;  /* Adjusted to ensure the button is fully visible */
+            top: 20px;
+            right: 20px;
             z-index: 1000;
             background-color: #4CAF50; /* Green */
             border: none;
