@@ -52,19 +52,19 @@ config_agent = utils.retrieve_config_from_agent()
 if "aws_credentials" not in st.session_state:
     st.session_state.aws_credentials = None
 
-# JavaScript to call the Streamlit function
 clear_chat_js = """
     <script>
     function clearChat() {
         const clearButton = document.querySelector('.fixed-button');
         clearButton.addEventListener('click', function() {
-            Streamlit.setComponentValue("clear");
+            // Notify Streamlit that the clear button was clicked
+            window.location.href = window.location.href.split('?')[0] + '?clear_chat=1';
         });
     }
     document.addEventListener("DOMContentLoaded", clearChat);
     </script>
     """
-components.html(clear_chat_js)
+st.markdown(clear_chat_js, unsafe_allow_html=True)
 
 # Define a function to clear the chat history
 def clear_chat_history():
