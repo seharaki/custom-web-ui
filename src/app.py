@@ -300,6 +300,6 @@ if st.session_state.show_feedback:
 if st.session_state.show_feedback_success:
     st.success("Thank you for your feedback!")
 
-# Ensure the clear chat button remains visible at the bottom of the response
-if st.session_state.messages:
+# Ensure the clear chat button remains visible at the bottom of the response only after authentication
+if "token" in st.session_state:
     st.button("Clear Chat", on_click=clear_chat_history)
