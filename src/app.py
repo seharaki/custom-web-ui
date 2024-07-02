@@ -239,7 +239,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             conversation_id=st.session_state["conversationId"],
             parent_message_id=st.session_state["parentMessageId"],
             user_message=st.session_state.user_prompt,
-            response=full_response,
+            response=response,
             config=config_agent
         )
         st.session_state["show_feedback"] = True
