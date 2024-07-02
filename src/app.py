@@ -245,6 +245,7 @@ else:
             st.session_state["show_feedback_success"] = False
             st.session_state.response_processing = False
             st.warning(safety_message, icon="🚨")
+            st.experimental_rerun()  # Re-run the script to re-enable buttons
 
 if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
