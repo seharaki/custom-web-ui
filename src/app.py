@@ -16,33 +16,6 @@ st.set_page_config(page_title=title, layout="wide")
 
 st.title(title)
 
-# Create a sticky header container
-header = st.container()
-with header:
-    st.markdown("<div class='fixed-header'></div>", unsafe_allow_html=True)
-    if st.button("Clear Chat", key="clear_chat"):
-        clear_chat_history()
-
-# Custom CSS for the sticky header
-st.markdown(
-    """
-<style>
-    div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
-        position: sticky;
-        top: 2.875rem;
-        background-color: white;
-        z-index: 999;
-        padding: 1rem;
-    }
-    .fixed-header {
-        border-bottom: 1px solid black;
-        padding-bottom: 1rem;
-    }
-</style>
-    """,
-    unsafe_allow_html=True
-)
-
 # Safety Messaging
 safety_message = "X"
  
@@ -63,6 +36,32 @@ def clear_chat_history():
     st.session_state["chat_history"] = []
     st.session_state["conversationId"] = ""
     st.session_state["parentMessageId"] = ""
+
+# Create a sticky header container
+header = st.container()
+with header:
+    st.markdown("<div class='fixed-header'></div>", unsafe_allow_html=True)
+    if st.button("Clear Chat", key="clear_chat"):
+        clear_chat_history()
+
+# Custom CSS for the sticky header
+st.markdown(
+    """
+<style>
+    div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
+        position: sticky;
+        top: 2.875rem;
+        z-index: 999;
+        padding: 1rem;
+    }
+    .fixed-header {
+        border-bottom: 1px solid black;
+        padding-bottom: 1rem;
+    }
+</style>
+    """,
+    unsafe_allow_html=True
+)
 
 def get_remaining_session_time():
     if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
