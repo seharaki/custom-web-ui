@@ -166,7 +166,7 @@ else:
         "What E"
     ]
 
-    # Display sample question buttons with increased width
+    # Display sample question buttons
     st.markdown(
         """
         <style>
@@ -175,11 +175,6 @@ else:
             font-size: 16px;
             font-weight: bold;
             margin-bottom: 20px; /* Adjust the value as needed */
-        }
-        .faq-button {
-            width: 100%;  /* Make the button take the full width of its container */
-            padding: 10px;
-            font-size: 16px;
         }
         </style>
         <div class="faq-title">Frequently Asked Questions</div>
@@ -193,9 +188,7 @@ else:
             key=question,
             disabled=st.session_state.response_processing,
             help="Click to ask this question",
-            on_click=lambda q=question: ask_question(q),
-            use_container_width=True,
-            css_class="faq-button"
+            on_click=lambda q=question: ask_question(q)
         )
 
 def ask_question(question):

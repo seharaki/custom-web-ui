@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import time
 
 import boto3
 import jwt
@@ -72,7 +73,6 @@ def configure_oauth_component(OAUTH_CONFIG: dict):
         client_id, None, authorize_url, token_url, refresh_token_url, revoke_token_url
     )
 
-
 def get_iam_oidc_token(id_token, config: Config):
     """
     Get the IAM OIDC token using the ID token retrieved from Cognito
@@ -84,7 +84,6 @@ def get_iam_oidc_token(id_token, config: Config):
         assertion=id_token,
     )
     return response
-
 
 def assume_role_with_token(iam_token, config: Config):
     """
@@ -104,7 +103,6 @@ def assume_role_with_token(iam_token, config: Config):
     )
     st.session_state.aws_credentials = response["Credentials"]
 
-
 # This method create the Q client
 def get_qclient(idc_id_token: str, config: Config):
     """
@@ -123,15 +121,15 @@ def get_qclient(idc_id_token: str, config: Config):
     amazon_q = session.client("qbusiness", config.REGION)
     return amazon_q
 
-
 # This code invoke chat_sync api and format the response for UI
 def get_queue_chain(
     prompt_input, conversation_id, parent_message_id, token, config:Config
 ):
-    """"
+    """
     This method is used to get the answer from the queue chain.
     """
     amazon_q = get_qclient(token, config)
+    start_time = time.time()
     try:
         if conversation_id != "":
                 answer = amazon_q.chat_sync(
@@ -145,7 +143,10 @@ def get_queue_chain(
                 applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
             )
     except:
-            st.rerun()
+        st.rerun()
+    end_time = time.time()
+    duration = end_time - start_time
+
     system_message = answer.get("systemMessage", "")
     conversation_id = answer.get("conversationId", "")
     parent_message_id = answer.get("systemMessageId", "")
@@ -153,6 +154,7 @@ def get_queue_chain(
         "answer": system_message,
         "conversationId": conversation_id,
         "parentMessageId": parent_message_id,
+        "duration": duration
     }
 
     if answer.get("sourceAttributions"):
@@ -227,7 +229,8 @@ def store_message_response(user_email, conversation_id, parent_message_id, user_
                 'ParentMessageId': parent_message_id,
                 'UserMessage': user_message,
                 'Response': response,
-                'Timestamp': datetime.now(tz=UTC).isoformat()
+                'Timestamp': datetime.now(tz=UTC).isoformat(),
+                'Duration': response.get('duration', 0)
             }
         )
         logger.info("Message and response stored successfully")
