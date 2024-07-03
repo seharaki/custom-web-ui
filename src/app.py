@@ -75,7 +75,6 @@ if "last_interaction_time" not in st.session_state:
 
 # Define a function to clear the chat history
 def clear_chat_history():
-    st.warning("calling clear chat")
     st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
     st.session_state.questions = []
     st.session_state.answers = []
@@ -131,7 +130,6 @@ def check_idle_time():
     while True:
         if auto_clear_session:
             current_time = datetime.now(tz=UTC)
-            st.warning(f"Current idle time: {current_time - st.session_state.last_interaction_time}")
             if (current_time - st.session_state.last_interaction_time) > timedelta(minutes=1):
                 clear_chat_history()
                 st.rerun()
