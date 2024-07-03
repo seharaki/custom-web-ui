@@ -5,6 +5,8 @@ import jwt.algorithms
 import streamlit as st  # all streamlit commands will be available through the "st" alias
 import utils
 from streamlit_feedback import streamlit_feedback
+import threading
+import time
 
 UTC = timezone.utc
 
@@ -30,6 +32,9 @@ safety_message = 'X'
 
 # Show Session Time
 session_toggle = False
+
+# Auto Clear Session Feature
+auto_clear_session = True
 
 # Init configuration
 config_agent = utils.retrieve_config_from_agent()
@@ -65,6 +70,8 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "warning_message" not in st.session_state:
     st.session_state.warning_message = False
+if "last_interaction_time" not in st.session_state:
+    st.session_state.last_interaction_time = datetime.now(tz=UTC)
 
 # Define a function to clear the chat history
 def clear_chat_history():
@@ -75,6 +82,7 @@ def clear_chat_history():
     st.session_state["chat_history"] = []
     st.session_state["conversationId"] = ""
     st.session_state["parentMessageId"] = ""
+    st.session_state.last_interaction_time = datetime.now(tz=UTC)
 
 def get_remaining_session_time():
     if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
@@ -118,6 +126,15 @@ def encode_urls_in_references(references):
         encoded_references += "URL: " + encoded_url + rest
     return encoded_references
 
+def check_idle_time():
+    while True:
+        if auto_clear_session:
+            current_time = datetime.now(tz=UTC)
+            if (current_time - st.session_state.last_interaction_time) > timedelta(minutes=1):
+                clear_chat_history()
+                st.rerun()
+        time.sleep(10)
+
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
     redirect_uri = f"https://{config_agent.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
@@ -135,6 +152,7 @@ if "token" not in st.session_state:
         st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + \
             timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
         st.session_state.authenticated = True
+        st.session_state.last_interaction_time = datetime.now(tz=UTC)
         st.rerun()
 else:
     token = st.session_state["token"]
@@ -201,6 +219,7 @@ def ask_question(question):
     st.session_state.user_prompt = question
     st.session_state.messages.append({"role": "user", "content": question})
     st.session_state.response_processing = True
+    st.session_state.last_interaction_time = datetime.now(tz=UTC)
 
 # Add a horizontal line after the sample questions
 st.markdown("<hr>", unsafe_allow_html=True)
@@ -211,14 +230,14 @@ for message in st.session_state.messages:
         st.write(message["content"])
 
 # User-provided prompt
-if st.session_state.authenticated:  # Only show chat input if authenticated
-    if prompt := st.chat_input(key="chat_input"):
-        st.session_state.user_prompt = prompt
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.write(prompt)
-        st.session_state["show_feedback"] = False
-        st.session_state.response_processing = True
+if prompt := st.chat_input(key="chat_input"):
+    st.session_state.user_prompt = prompt
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.write(prompt)
+    st.session_state["show_feedback"] = False
+    st.session_state.response_processing = True
+    st.session_state.last_interaction_time = datetime.now(tz=UTC)
 
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     with st.chat_message("assistant"):
@@ -252,7 +271,8 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         st.session_state["show_feedback_success"] = False
         st.session_state.response_processing = False
         st.session_state.warning_message = True
-        st.experimental_rerun()  # Re-run the script to re-enable buttons
+        st.warning(safety_message, icon="🚨")
+        st.rerun()  # Re-run the script to re-enable buttons
 
 if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
@@ -271,7 +291,7 @@ if st.session_state.show_feedback:
         st.session_state["show_feedback"] = False
         st.session_state["feedback_type"] = ""
         st.session_state["show_feedback_success"] = True
-        st.experimental_rerun()
+        st.rerun()
     if col2.button("👎", key="thumbs_down"):
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
@@ -308,14 +328,18 @@ if st.session_state.show_feedback:
                 st.session_state["feedback_reason"] = ""
                 st.session_state["additional_feedback"] = ""
                 st.session_state["show_feedback_success"] = True
-                st.experimental_rerun()
+                st.rerun()
 
 if st.session_state.show_feedback_success:
     st.success("Thank you for your feedback!")
 
-if st.session_state.warning_message:
-    st.warning(safety_message, icon="🚨")
-
 # Ensure the clear chat button remains visible at the bottom of the response only after authentication
 if "token" in st.session_state:
     st.button("Clear Chat", on_click=clear_chat_history)
+
+# Start the idle timer check thread
+if auto_clear_session:
+    if "idle_thread" not in st.session_state:
+        idle_thread = threading.Thread(target=check_idle_time, daemon=True)
+        idle_thread.start()
+        st.session_state.idle_thread = idle_thread
