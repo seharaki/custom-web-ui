@@ -331,10 +331,11 @@ else:
     # Check for inactivity and clear chat if idle for more than 10 seconds
     current_time = datetime.now(tz=UTC)
     st.warning(f"{current_time - st.session_state.last_interaction_time}")
-    st.rerun()
     if current_time - st.session_state.last_interaction_time > timedelta(seconds=10):
         st.warning("clearing")
         clear_chat_history()
+        st.rerun()
+        st.warning("clearing2")
 
 # Update the last interaction time with each run
 st.session_state.last_interaction_time = datetime.now(tz=UTC)
