@@ -78,7 +78,7 @@ def clear_chat_history():
     st.session_state["parentMessageId"] = ""
     st.warning("Chat cleared")
     st.session_state.last_interaction_time = datetime.now(tz=UTC)
-    st.experimental_rerun()
+    st.rerun()
 
 def get_remaining_session_time():
     if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
@@ -330,8 +330,9 @@ else:
 
     # Check for inactivity and clear chat if idle for more than 10 seconds
     current_time = datetime.now(tz=UTC)
-    st.warning(f"{current_time}")
+    st.warning(f"{current_time - st.session_state.last_interaction_time}")
     if current_time - st.session_state.last_interaction_time > timedelta(seconds=10):
+        st.warning("clearing")
         clear_chat_history()
 
 # Update the last interaction time with each run
