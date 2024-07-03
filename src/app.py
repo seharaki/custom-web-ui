@@ -35,6 +35,7 @@ session_toggle = False
 
 # Auto Clear Session Feature
 auto_clear_session = True
+idle_timeout_seconds = 30
 
 # Init configuration
 config_agent = utils.retrieve_config_from_agent()
@@ -130,10 +131,12 @@ def check_idle_time():
     while True:
         if auto_clear_session:
             current_time = datetime.now(tz=UTC)
-            if (current_time - st.session_state.last_interaction_time) > timedelta(minutes=1):
+            idle_time = (current_time - st.session_state.last_interaction_time).total_seconds()
+            if idle_time > idle_timeout_seconds:
                 clear_chat_history()
                 st.rerun()
-        time.sleep(10)
+            st.session_state.idle_time_left = max(0, idle_timeout_seconds - idle_time)
+        time.sleep(1)
 
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
@@ -336,6 +339,10 @@ if st.session_state.show_feedback_success:
 # Ensure the clear chat button remains visible at the bottom of the response only after authentication
 if "token" in st.session_state:
     st.button("Clear Chat", on_click=clear_chat_history)
+
+# Display remaining idle time before auto-clear
+if "idle_time_left" in st.session_state:
+    st.warning(f"Time left before chat clears: {st.session_state.idle_time_left:.0f} seconds", icon="⏰")
 
 # Start the idle timer check thread
 if auto_clear_session:
