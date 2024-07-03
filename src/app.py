@@ -131,6 +131,7 @@ def check_idle_time():
     while True:
         if auto_clear_session:
             current_time = datetime.now(tz=UTC)
+            st.warning(f"Current idle time: {current_time - st.session_state.last_interaction_time}")
             if (current_time - st.session_state.last_interaction_time) > timedelta(minutes=1):
                 clear_chat_history()
                 st.rerun()
