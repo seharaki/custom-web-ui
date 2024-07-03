@@ -61,6 +61,8 @@ if "show_feedback_success" not in st.session_state:
     st.session_state.show_feedback_success = False
 if "response_processing" not in st.session_state:
     st.session_state.response_processing = False
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 if "warning_message" not in st.session_state:
     st.session_state.warning_message = False
 
@@ -73,7 +75,6 @@ def clear_chat_history():
     st.session_state["chat_history"] = []
     st.session_state["conversationId"] = ""
     st.session_state["parentMessageId"] = ""
-    st.session_state.warning_message = False
 
 def get_remaining_session_time():
     if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
@@ -133,6 +134,7 @@ if "token" not in st.session_state:
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(st.session_state.token["id_token"], config=config_agent)
         st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + \
             timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
+        st.session_state.authenticated = True
         st.rerun()
 else:
     token = st.session_state["token"]
@@ -199,7 +201,6 @@ def ask_question(question):
     st.session_state.user_prompt = question
     st.session_state.messages.append({"role": "user", "content": question})
     st.session_state.response_processing = True
-    st.session_state.warning_message = False
 
 # Add a horizontal line after the sample questions
 st.markdown("<hr>", unsafe_allow_html=True)
@@ -210,14 +211,14 @@ for message in st.session_state.messages:
         st.write(message["content"])
 
 # User-provided prompt
-if prompt := st.chat_input(key="chat_input"):
-    st.session_state.user_prompt = prompt
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.write(prompt)
-    st.session_state["show_feedback"] = False
-    st.session_state.response_processing = True
-    st.session_state.warning_message = False
+if st.session_state.authenticated:  # Only show chat input if authenticated
+    if prompt := st.chat_input(key="chat_input"):
+        st.session_state.user_prompt = prompt
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.write(prompt)
+        st.session_state["show_feedback"] = False
+        st.session_state.response_processing = True
 
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     with st.chat_message("assistant"):
@@ -312,7 +313,6 @@ if st.session_state.show_feedback:
 if st.session_state.show_feedback_success:
     st.success("Thank you for your feedback!")
 
-# Display the warning message if set
 if st.session_state.warning_message:
     st.warning(safety_message, icon="🚨")
 
