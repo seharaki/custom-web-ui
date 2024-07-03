@@ -75,6 +75,7 @@ if "last_interaction_time" not in st.session_state:
 
 # Define a function to clear the chat history
 def clear_chat_history():
+    st.warning("calling clear chat")
     st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
     st.session_state.questions = []
     st.session_state.answers = []
