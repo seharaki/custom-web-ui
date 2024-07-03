@@ -349,7 +349,9 @@ if "idle_time_left" in st.session_state:
 
 # Start the idle timer check thread
 if auto_clear_session:
+    st.warning("calling auto clear")
     if "idle_thread" not in st.session_state:
+        st.warning("entering auto clear")
         idle_thread = threading.Thread(target=check_idle_time, daemon=True)
         idle_thread.start()
         st.session_state.idle_thread = idle_thread
