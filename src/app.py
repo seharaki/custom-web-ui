@@ -142,7 +142,7 @@ def check_idle_time():
             st.session_state.idle_time_left = max(0, idle_timeout_seconds - idle_time)
         time.sleep(1)
 
-oauth2 = utils.configure_oauth_component(config_agent)
+oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
     redirect_uri = f"https://{config_agent.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
     result = oauth2.authorize_button("Start Chatting", scope="openid email offline_access", pkce="S256", redirect_uri=redirect_uri)
@@ -222,7 +222,8 @@ else:
         )
 
     # Start the idle timer check thread after user is authenticated and interacting
-    if auto_clear_session and not st.session_state.idle_thread_started:
+    if auto_clear_session and st.session_state.authenticated and not st.session_state.idle_thread_started:
+        st.warning("Starting idle thread")
         idle_thread = threading.Thread(target=check_idle_time, daemon=True)
         idle_thread.start()
         st.session_state.idle_thread_started = True
@@ -354,10 +355,3 @@ if st.session_state.authenticated:
     # Display remaining idle time before auto-clear
     if "idle_time_left" in st.session_state:
         st.warning(f"Time left before chat clears: {st.session_state.idle_time_left:.0f} seconds", icon="⏰")
-
-# Start the idle timer check thread
-if auto_clear_session and st.session_state.authenticated:
-    if "idle_thread" not in st.session_state:
-        idle_thread = threading.Thread(target=check_idle_time, daemon=True)
-        idle_thread.start()
-        st.session_state.idle_thread = idle_thread
