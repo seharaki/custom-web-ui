@@ -128,10 +128,12 @@ def encode_urls_in_references(references):
     return encoded_references
 
 def check_idle_time():
+    st.warning("Calling check idle time")
     while True:
         if auto_clear_session:
             current_time = datetime.now(tz=UTC)
             idle_time = (current_time - st.session_state.last_interaction_time).total_seconds()
+            st.warning(f"Calling check idle time {idle_time}")
             if idle_time > idle_timeout_seconds:
                 clear_chat_history()
                 st.rerun()
