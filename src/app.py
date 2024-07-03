@@ -84,6 +84,7 @@ def clear_chat_history():
     st.session_state["conversationId"] = ""
     st.session_state["parentMessageId"] = ""
     st.session_state.last_interaction_time = datetime.now(tz=UTC)
+    st.warning("Clearing chat")
 
 def get_remaining_session_time():
     if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
