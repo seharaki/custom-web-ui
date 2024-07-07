@@ -261,11 +261,11 @@ if st.session_state.show_feedback:
     st.markdown(
         """
         <style>
-        div[data-testid="stVerticalBlock"] div[data-testid="stHorizontalBlock"] > div:first-child button {
+        .feedback-button-up button {
             background-color: green !important;
             font-size: 24px !important;
         }
-        div[data-testid="stVerticalBlock"] div[data-testid="stHorizontalBlock"] > div:nth-child(2) button {
+        .feedback-button-down button {
             background-color: red !important;
             font-size: 24px !important;
         }
@@ -274,7 +274,7 @@ if st.session_state.show_feedback:
         unsafe_allow_html=True
     )
 
-    if col1.button("👍", key="thumbs_up"):
+    if col1.button("👍", key="thumbs_up", class_="feedback-button-up"):
         feedback_type = "👍 Thumbs Up"
         st.session_state["feedback_type"] = feedback_type
         utils.store_feedback(
@@ -289,7 +289,7 @@ if st.session_state.show_feedback:
         st.session_state["feedback_type"] = ""
         st.session_state["show_feedback_success"] = True
         st.experimental_rerun()
-    if col2.button("👎", key="thumbs_down"):
+    if col2.button("👎", key="thumbs_down", class_="feedback-button-down"):
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
 
