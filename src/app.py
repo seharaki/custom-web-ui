@@ -261,20 +261,21 @@ if st.session_state.show_feedback:
     st.markdown(
         """
         <style>
-        .thumbs-up {
-            background-color: green;
-            font-size: 50px;
+        .stButton button {
+            font-size: 24px !important;
         }
-        .thumbs-down {
-            background-color: red;
-            font-size: 50px;
+        .stButton button[data-baseweb="button"]:first-of-type {
+            background-color: green !important;
+        }
+        .stButton button[data-baseweb="button"]:nth-of-type(2) {
+            background-color: red !important;
         }
         </style>
         """,
         unsafe_allow_html=True
     )
 
-    if col1.button("👍", key="thumbs_up", help="Click to provide positive feedback"):
+    if col1.button("👍", key="thumbs_up"):
         feedback_type = "👍 Thumbs Up"
         st.session_state["feedback_type"] = feedback_type
         utils.store_feedback(
@@ -289,7 +290,7 @@ if st.session_state.show_feedback:
         st.session_state["feedback_type"] = ""
         st.session_state["show_feedback_success"] = True
         st.experimental_rerun()
-    if col2.button("👎", key="thumbs_down", help="Click to provide negative feedback"):
+    if col2.button("👎", key="thumbs_down"):
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
 
