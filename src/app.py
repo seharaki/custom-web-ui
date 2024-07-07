@@ -257,7 +257,24 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
 if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
     feedback_type = None
-    if col1.button("👍", key="thumbs_up"):
+
+    st.markdown(
+        """
+        <style>
+        .thumbs-up {
+            background-color: green;
+            font-size: 20px;
+        }
+        .thumbs-down {
+            background-color: red;
+            font-size: 20px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    if col1.button("👍", key="thumbs_up", help="Click to provide positive feedback"):
         feedback_type = "👍 Thumbs Up"
         st.session_state["feedback_type"] = feedback_type
         utils.store_feedback(
@@ -272,7 +289,7 @@ if st.session_state.show_feedback:
         st.session_state["feedback_type"] = ""
         st.session_state["show_feedback_success"] = True
         st.experimental_rerun()
-    if col2.button("👎", key="thumbs_down"):
+    if col2.button("👎", key="thumbs_down", help="Click to provide negative feedback"):
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
 
