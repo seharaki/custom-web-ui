@@ -261,13 +261,16 @@ if st.session_state.show_feedback:
     st.markdown(
         """
         <style>
-        .stButton button {
+        .feedback-button-container button {
             font-size: 24px !important;
+            width: 100% !important;
+            height: 100% !important;
+            display: inline-block;
         }
-        .stButton button[data-baseweb="button"]:first-of-type {
+        .feedback-button-container button:first-of-type {
             background-color: green !important;
         }
-        .stButton button[data-baseweb="button"]:nth-of-type(2) {
+        .feedback-button-container button:nth-of-type(2) {
             background-color: red !important;
         }
         </style>
