@@ -261,17 +261,13 @@ if st.session_state.show_feedback:
     st.markdown(
         """
         <style>
-        .feedback-button-container button {
-            font-size: 24px !important;
-            width: 100% !important;
-            height: 100% !important;
-            display: inline-block;
-        }
-        .feedback-button-container button:first-of-type {
+        div[data-testid="stVerticalBlock"] div[data-testid="stHorizontalBlock"] > div:first-child button {
             background-color: green !important;
+            font-size: 24px !important;
         }
-        .feedback-button-container button:nth-of-type(2) {
+        div[data-testid="stVerticalBlock"] div[data-testid="stHorizontalBlock"] > div:nth-child(2) button {
             background-color: red !important;
+            font-size: 24px !important;
         }
         </style>
         """,
