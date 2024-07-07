@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta, timezone
+
 import jwt
 import jwt.algorithms
-import streamlit as st
+import streamlit as st  # all streamlit commands will be available through the "st" alias
 import utils
 from streamlit_feedback import streamlit_feedback
 
@@ -15,7 +16,7 @@ st.set_page_config(page_title=title, layout="wide")
 
 st.title(title)
 
-# Hide Streamlit Menu
+# Hide Streamlit ... Menu
 hide_streamlit_style = """
         <style>
         #MainMenu {visibility: hidden;}
@@ -64,8 +65,6 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "warning_message" not in st.session_state:
     st.session_state.warning_message = False
-if "last_interaction_time" not in st.session_state:
-    st.session_state.last_interaction_time = datetime.now(tz=UTC)
 
 # Define a function to clear the chat history
 def clear_chat_history():
@@ -76,9 +75,6 @@ def clear_chat_history():
     st.session_state["chat_history"] = []
     st.session_state["conversationId"] = ""
     st.session_state["parentMessageId"] = ""
-    st.session_state.last_interaction_time = datetime.now(tz=UTC)
-    st.rerun()
-    st.warning("Chat cleared")
 
 def get_remaining_session_time():
     if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
@@ -139,11 +135,10 @@ if "token" not in st.session_state:
         st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + \
             timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
         st.session_state.authenticated = True
-        st.session_state.last_interaction_time = datetime.now(tz=UTC)
         st.rerun()
 else:
     token = st.session_state["token"]
-    refresh_token = token.get("refresh_token")
+    refresh_token = token.get("refresh_token")  # saving the long lived refresh_token
     user_email = jwt.decode(token["id_token"], options={"verify_signature": False})["email"]
     if not refresh_token:
         st.error("No refresh token available. Please log in again.")
@@ -201,141 +196,126 @@ else:
             on_click=lambda q=question: ask_question(q)
         )
 
-    def ask_question(question):
-        st.session_state.clicked_samples.append(question)
-        st.session_state.user_prompt = question
-        st.session_state.messages.append({"role": "user", "content": question})
+def ask_question(question):
+    st.session_state.clicked_samples.append(question)
+    st.session_state.user_prompt = question
+    st.session_state.messages.append({"role": "user", "content": question})
+    st.session_state.response_processing = True
+
+# Add a horizontal line after the sample questions
+st.markdown("<hr>", unsafe_allow_html=True)
+
+# Display the chat messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.write(message["content"])
+
+# User-provided prompt
+if st.session_state.authenticated:  # Only show chat input if authenticated
+    if prompt := st.chat_input(key="chat_input"):
+        st.session_state.user_prompt = prompt
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.write(prompt)
+        st.session_state["show_feedback"] = False
         st.session_state.response_processing = True
-        st.session_state.last_interaction_time = datetime.now(tz=UTC)
 
-    # Add a horizontal line after the sample questions
-    st.markdown("<hr>", unsafe_allow_html=True)
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            placeholder = st.empty()
+            response = utils.get_queue_chain(
+                st.session_state.user_prompt,
+                st.session_state["conversationId"],
+                st.session_state["parentMessageId"],
+                st.session_state["idc_jwt_token"]["idToken"],
+                config_agent
+            )
+            if "references" in response:
+                full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
+            else:
+                full_response = f"""{response["answer"]}\n\n---\nNo sources"""
+            placeholder.markdown(full_response)
+            st.session_state["conversationId"] = response["conversationId"]
+            st.session_state["parentMessageId"] = response["parentMessageId"]
 
-    # Display the chat messages
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.write(message["content"])
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
+        utils.store_message_response(
+            user_email=user_email,
+            conversation_id=st.session_state["conversationId"],
+            parent_message_id=st.session_state["parentMessageId"],
+            user_message=st.session_state.user_prompt,
+            response=response,
+            config=config_agent
+        )
+        st.session_state["show_feedback"] = True
+        st.session_state["show_feedback_success"] = False
+        st.session_state.response_processing = False
+        st.session_state.warning_message = True
+        st.experimental_rerun()  # Re-run the script to re-enable buttons
 
-    # User-provided prompt
-    if st.session_state.authenticated:
-        if prompt := st.chat_input(key="chat_input"):
-            st.session_state.user_prompt = prompt
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.write(prompt)
-            st.session_state["show_feedback"] = False
-            st.session_state.response_processing = True
-            st.session_state.last_interaction_time = datetime.now(tz=UTC)
+if st.session_state.show_feedback:
+    col1, col2, _ = st.columns([1, 1, 10])
+    feedback_type = None
+    if col1.button("👍", key="thumbs_up"):
+        feedback_type = "👍 Thumbs Up"
+        st.session_state["feedback_type"] = feedback_type
+        utils.store_feedback(
+            user_email=user_email,
+            conversation_id=st.session_state["conversationId"],
+            parent_message_id=st.session_state["parentMessageId"],
+            user_message=st.session_state.user_prompt,
+            feedback={"type": feedback_type},
+            config=config_agent
+        )
+        st.session_state["show_feedback"] = False
+        st.session_state["feedback_type"] = ""
+        st.session_state["show_feedback_success"] = True
+        st.experimental_rerun()
+    if col2.button("👎", key="thumbs_down"):
+        feedback_type = "👎 Thumbs Down"
+        st.session_state["feedback_type"] = feedback_type
 
-    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                placeholder = st.empty()
-                response = utils.get_queue_chain(
-                    st.session_state.user_prompt,
-                    st.session_state["conversationId"],
-                    st.session_state["parentMessageId"],
-                    st.session_state["idc_jwt_token"]["idToken"],
-                    config_agent
+    additional_feedback = ""
+
+    if st.session_state.get("feedback_type") == "👎 Thumbs Down":
+        feedback_reason = st.selectbox(
+            "Please select the reason for your feedback:",
+            ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"],
+            key="feedback_selectbox"
+        )
+        if feedback_reason == "Other":
+            additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback_input")
+
+        if st.button("Submit Feedback", key="submit_feedback_button"):
+            if feedback_reason == "Other" and not additional_feedback:
+                st.warning("Please provide additional feedback for 'Other'.")
+            else:
+                feedback_details = feedback_reason
+                if additional_feedback:
+                    feedback_details = additional_feedback
+
+                utils.store_feedback(
+                    user_email=user_email,
+                    conversation_id=st.session_state["conversationId"],
+                    parent_message_id=st.session_state["parentMessageId"],
+                    user_message=st.session_state.user_prompt,
+                    feedback={"type": st.session_state["feedback_type"], "reason": feedback_details},
+                    config=config_agent
                 )
-                if "references" in response:
-                    full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
-                else:
-                    full_response = f"""{response["answer"]}\n\n---\nNo sources"""
-                placeholder.markdown(full_response)
-                st.session_state["conversationId"] = response["conversationId"]
-                st.session_state["parentMessageId"] = response["parentMessageId"]
+                st.session_state["show_feedback"] = False
+                st.session_state["feedback_type"] = ""
+                st.session_state["feedback_reason"] = ""
+                st.session_state["additional_feedback"] = ""
+                st.session_state["show_feedback_success"] = True
+                st.experimental_rerun()
 
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            utils.store_message_response(
-                user_email=user_email,
-                conversation_id=st.session_state["conversationId"],
-                parent_message_id=st.session_state["parentMessageId"],
-                user_message=st.session_state.user_prompt,
-                response=response,
-                config=config_agent
-            )
-            st.session_state["show_feedback"] = True
-            st.session_state["show_feedback_success"] = False
-            st.session_state.response_processing = False
-            st.session_state.warning_message = True
-            st.session_state.last_interaction_time = datetime.now(tz=UTC)
-            st.experimental_rerun()
+if st.session_state.show_feedback_success:
+    st.success("Thank you for your feedback!")
 
-    if st.session_state.show_feedback:
-        col1, col2, _ = st.columns([1, 1, 10])
-        feedback_type = None
-        if col1.button("👍", key="thumbs_up"):
-            feedback_type = "👍 Thumbs Up"
-            st.session_state["feedback_type"] = feedback_type
-            utils.store_feedback(
-                user_email=user_email,
-                conversation_id=st.session_state["conversationId"],
-                parent_message_id=st.session_state["parentMessageId"],
-                user_message=st.session_state.user_prompt,
-                feedback={"type": feedback_type},
-                config=config_agent
-            )
-            st.session_state["show_feedback"] = False
-            st.session_state["feedback_type"] = ""
-            st.session_state["show_feedback_success"] = True
-            st.experimental_rerun()
-        if col2.button("👎", key="thumbs_down"):
-            feedback_type = "👎 Thumbs Down"
-            st.session_state["feedback_type"] = feedback_type
+if st.session_state.warning_message:
+    st.warning(safety_message, icon="🚨")
 
-        additional_feedback = ""
-
-        if st.session_state.get("feedback_type") == "👎 Thumbs Down":
-            feedback_reason = st.selectbox(
-                "Please select the reason for your feedback:",
-                ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"],
-                key="feedback_selectbox"
-            )
-            if feedback_reason == "Other":
-                additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback_input")
-
-            if st.button("Submit Feedback", key="submit_feedback_button"):
-                if feedback_reason == "Other" and not additional_feedback:
-                    st.warning("Please provide additional feedback for 'Other'.")
-                else:
-                    feedback_details = feedback_reason
-                    if additional_feedback:
-                        feedback_details = additional_feedback
-
-                    utils.store_feedback(
-                        user_email=user_email,
-                        conversation_id=st.session_state["conversationId"],
-                        parent_message_id=st.session_state["parentMessageId"],
-                        user_message=st.session_state.user_prompt,
-                        feedback={"type": st.session_state["feedback_type"], "reason": feedback_details},
-                        config=config_agent
-                    )
-                    st.session_state["show_feedback"] = False
-                    st.session_state["feedback_type"] = ""
-                    st.session_state["feedback_reason"] = ""
-                    st.session_state["additional_feedback"] = ""
-                    st.session_state["show_feedback_success"] = True
-                    st.experimental_rerun()
-
-    if st.session_state.show_feedback_success:
-        st.success("Thank you for your feedback!")
-
-    if st.session_state.warning_message:
-        st.warning(safety_message, icon="🚨")
-
-    # Ensure the clear chat button remains visible at the bottom of the response only after authentication
-    if "token" in st.session_state:
-        st.button("Clear Chat", on_click=clear_chat_history)
-
-    # Check for inactivity and clear chat if idle for more than 10 seconds
-    current_time = datetime.now(tz=UTC)
-    st.warning(f"{current_time - st.session_state.last_interaction_time}")
-    if current_time - st.session_state.last_interaction_time > timedelta(seconds=10):
-        st.warning("clearing")
-        clear_chat_history()
-        st.rerun()
-        st.warning("clearing2")
-
-# Update the last interaction time with each run
-st.session_state.last_interaction_time = datetime.now(tz=UTC)
+# Ensure the clear chat button remains visible at the bottom of the response only after authentication
+if "token" in st.session_state:
+    st.button("Clear Chat", on_click=clear_chat_history)
