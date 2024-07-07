@@ -263,11 +263,11 @@ if st.session_state.show_feedback:
         <style>
         .thumbs-up {
             background-color: green;
-            font-size: 20px;
+            font-size: 50px;
         }
         .thumbs-down {
             background-color: red;
-            font-size: 20px;
+            font-size: 50px;
         }
         </style>
         """,
