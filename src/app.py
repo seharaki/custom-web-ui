@@ -169,7 +169,7 @@ else:
 
     # Automatic token refresh
     refresh_token_if_needed()
-    ma 
+    
     col1, col2, col3 = st.columns([1, 1, 3])
 
     with col1:
