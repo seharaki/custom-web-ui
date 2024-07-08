@@ -77,8 +77,8 @@ if "show_feedback" not in st.session_state:
     st.session_state.show_feedback = False
 if "show_feedback_success" not in st.session_state:
     st.session_state.show_feedback_success = False
-if "response_processing" not in st.session_state:
-    st.session_state.response_processing = False
+if "thinking" not in st.session_state:
+    st.session_state.thinking = False
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "warning_message" not in st.session_state:
@@ -170,7 +170,7 @@ else:
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
-        open_help_modal = st.button("Help", disabled=st.session_state.response_processing)
+        open_help_modal = st.button("Help", disabled=st.session_state.thinking)
         if open_help_modal:
             help_modal.open()
 
@@ -216,7 +216,7 @@ else:
         cols[idx].button(
             question,
             key=question,
-            disabled=st.session_state.response_processing,
+            disabled=st.session_state.thinking,
             help="Click to ask",
             on_click=lambda q=question: ask_question(q)
         )
@@ -225,7 +225,7 @@ def ask_question(question):
     st.session_state.clicked_samples.append(question)
     st.session_state.user_prompt = question
     st.session_state.messages.append({"role": "user", "content": question})
-    st.session_state.response_processing = True
+    st.session_state.thinking = True
 
 # Add a horizontal line after the sample questions
 st.markdown("<hr>", unsafe_allow_html=True)
@@ -240,13 +240,13 @@ if st.session_state.authenticated:  # Only show chat input if authenticated
     if prompt := st.chat_input(key="chat_input"):
         st.session_state.user_prompt = prompt
         st.session_state.messages.append({"role": "user", "content": prompt})
-        st.session_state.response_processing = True  # Disable buttons when user sends a message
+        st.session_state.thinking = True  # Disable buttons when user sends a message
         with st.chat_message("user"):
             st.write(prompt)
         st.session_state["show_feedback"] = False
 
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
-    st.session_state.response_processing = True
+    st.session_state.thinking = True
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             placeholder = st.empty()
@@ -276,7 +276,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         )
         st.session_state["show_feedback"] = True
         st.session_state["show_feedback_success"] = False
-        st.session_state.response_processing = False
+        st.session_state.thinking = False
         st.session_state.warning_message = True
         st.experimental_rerun()  # Re-run the script to re-enable buttons
 
