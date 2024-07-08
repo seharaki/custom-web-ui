@@ -258,14 +258,15 @@ if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
     feedback_type = None
 
+    # Apply CSS to target the buttons using their keys
     st.markdown(
         """
         <style>
-        [data-testid="stVerticalBlock"] button[data-testid="thumbs_up"] {
+        button[data-testid="thumbs_up"] {
             background-color: green !important;
             font-size: 24px !important;
         }
-        [data-testid="stVerticalBlock"] button[data-testid="thumbs_down"] {
+        button[data-testid="thumbs_down"] {
             background-color: red !important;
             font-size: 24px !important;
         }
