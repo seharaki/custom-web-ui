@@ -258,15 +258,14 @@ if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
     feedback_type = None
 
-    # Apply CSS to target the buttons using their keys
     st.markdown(
         """
         <style>
-        button[data-testid="thumbs_up"] {
+        .feedback-button-up button {
             background-color: green !important;
             font-size: 24px !important;
         }
-        button[data-testid="thumbs_down"] {
+        .feedback-button-down button {
             background-color: red !important;
             font-size: 24px !important;
         }
@@ -275,7 +274,7 @@ if st.session_state.show_feedback:
         unsafe_allow_html=True
     )
 
-    if col1.button("👍", key="thumbs_up"):
+    if col1.button("👍", key="thumbs_up", use_container_width=True):
         feedback_type = "👍 Thumbs Up"
         st.session_state["feedback_type"] = feedback_type
         utils.store_feedback(
@@ -290,7 +289,7 @@ if st.session_state.show_feedback:
         st.session_state["feedback_type"] = ""
         st.session_state["show_feedback_success"] = True
         st.experimental_rerun()
-    if col2.button("👎", key="thumbs_down"):
+    if col2.button("👎", key="thumbs_down", use_container_width=True):
         feedback_type = "👎 Thumbs Down"
         st.session_state["feedback_type"] = feedback_type
 
