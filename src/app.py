@@ -6,17 +6,12 @@ import streamlit as st  # all streamlit commands will be available through the "
 import utils
 from streamlit_feedback import streamlit_feedback
 from streamlit_modal import Modal
-import streamlit.components.v1 as components
 
 UTC = timezone.utc
 
 # Title
 title = "X"
-help_message = '''The chatbot is divided into 3 main sections:
- \n
-•   A \n
-•   B \n
-'''
+help_message = "X"
 # Page Styling Configuration
 st.set_page_config(page_title=title, layout="wide")
 
@@ -170,19 +165,19 @@ else:
 
     # Automatic token refresh
     refresh_token_if_needed()
-    
+    ma 
     col1, col2, col3 = st.columns([1, 1, 3])
 
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
-        open_help_modal = st.button("Help")
+        open_help_modal = st.button("Help", disabled=st.session_state.response_processing)
         if open_help_modal:
             help_modal.open()
 
     if help_modal.is_open():
         with help_modal.container():
-            st.write(help_message)
+            st.write("Here is how to use this chatbot, click the FAQs at the top")
 
     if "messages" not in st.session_state or not st.session_state.messages:
         st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
@@ -282,6 +277,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         st.session_state["show_feedback"] = True
         st.session_state["show_feedback_success"] = False
         st.session_state.response_processing = False
+        st.session_state.warning_message = True
         st.experimental_rerun()  # Re-run the script to re-enable buttons
 
 if st.session_state.show_feedback:
@@ -355,18 +351,3 @@ if st.session_state.warning_message:
 # Ensure the clear chat button remains visible at the bottom of the response only after authentication
 if "token" in st.session_state:
     st.button("Clear Chat", on_click=clear_chat_history)
-
-# Add a JavaScript component to scroll to the top of the response container
-scroll_to_top_js = """
-<script>
-function scrollToTop() {
-    var chatMessages = document.getElementsByClassName("css-1oe3j0t e1ewe7hr3");
-    if (chatMessages.length > 0) {
-        chatMessages[0].scrollIntoView({behavior: 'smooth', block: 'start'});
-    }
-}
-scrollToTop();
-</script>
-"""
-
-components.html(scroll_to_top_js)
