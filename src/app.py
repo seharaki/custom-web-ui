@@ -11,7 +11,11 @@ UTC = timezone.utc
 
 # Title
 title = "X"
-
+help_message = '''The chatbot is divided into 3 main sections:
+ \n
+•   A \n
+•   B \n
+'''
 # Page Styling Configuration
 st.set_page_config(page_title=title, layout="wide")
 
@@ -165,7 +169,7 @@ else:
 
     # Automatic token refresh
     refresh_token_if_needed()
-
+    ma 
     col1, col2, col3 = st.columns([1, 1, 3])
 
     with col1:
@@ -177,7 +181,7 @@ else:
 
     if help_modal.is_open():
         with help_modal.container():
-            st.write("Here is how to use this chatbot, click the FAQs at the top")
+            st.write(help_message)
 
     if "messages" not in st.session_state or not st.session_state.messages:
         st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
