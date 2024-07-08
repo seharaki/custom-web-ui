@@ -83,6 +83,8 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "warning_message" not in st.session_state:
     st.session_state.warning_message = False
+if "rerun" not in st.session_state:
+    st.session_state.rerun = False
 
 # Define a function to clear the chat history
 def clear_chat_history():
@@ -220,14 +222,18 @@ else:
             key=question,
             disabled=st.session_state.thinking,
             help="Click to ask",
-            on_click=lambda q=question: ask_question(q)
+            on_click=lambda q=question: set_rerun_flag(q)
         )
 
-def ask_question(question):
+def set_rerun_flag(question):
     st.session_state.clicked_samples.append(question)
     st.session_state.user_prompt = question
     st.session_state.messages.append({"role": "user", "content": question})
     st.session_state.thinking = True
+    st.session_state.rerun = True
+
+if st.session_state.rerun:
+    st.session_state.rerun = False
     st.rerun()
 
 # Add a horizontal line after the sample questions
