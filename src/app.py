@@ -5,6 +5,7 @@ import jwt.algorithms
 import streamlit as st  # all streamlit commands will be available through the "st" alias
 import utils
 from streamlit_feedback import streamlit_feedback
+from streamlit_modal import Modal
 
 UTC = timezone.utc
 
@@ -36,66 +37,11 @@ st.markdown("""
     background-color: red !important;
     font-size: 24px !important;
 }
-#help-modal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgb(0,0,0);
-    background-color: rgba(0,0,0,0.4);
-}
-#help-modal-content {
-    background-color: #fefefe;
-    margin: 15% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-}
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-}
-.close:hover,
-.close:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
 </style>
 """, unsafe_allow_html=True)
 
-# JavaScript to handle modal behavior
-st.markdown("""
-<script>
-function openModal() {
-    document.getElementById("help-modal").style.display = "block";
-}
-function closeModal() {
-    document.getElementById("help-modal").style.display = "none";
-}
-window.onclick = function(event) {
-    if (event.target == document.getElementById("help-modal")) {
-        document.getElementById("help-modal").style.display = "none";
-    }
-}
-</script>
-""", unsafe_allow_html=True)
-
-# HTML for the modal
-st.markdown("""
-<div id="help-modal">
-  <div id="help-modal-content">
-    <span class="close" onclick="closeModal()">&times;</span>
-    <p>Here is how to use this chatbot, click the FAQs at the top</p>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+# Modal setup
+help_modal = Modal("Help Modal", key="help-modal", padding=20, max_width=744)
 
 # Safety Messaging
 safety_message = 'X'
@@ -225,8 +171,13 @@ else:
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
-        if st.button("Help"):
-            st.markdown("<script>openModal()</script>", unsafe_allow_html=True)
+        open_help_modal = st.button("Help")
+        if open_help_modal:
+            help_modal.open()
+
+    if help_modal.is_open():
+        with help_modal.container():
+            st.write("Here is how to use this chatbot, click the FAQs at the top")
 
     if "messages" not in st.session_state or not st.session_state.messages:
         st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
