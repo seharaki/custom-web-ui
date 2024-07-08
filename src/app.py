@@ -6,6 +6,7 @@ import streamlit as st  # all streamlit commands will be available through the "
 import utils
 from streamlit_feedback import streamlit_feedback
 from streamlit_modal import Modal
+import streamlit.components.v1 as components
 
 UTC = timezone.utc
 
@@ -281,7 +282,6 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         st.session_state["show_feedback"] = True
         st.session_state["show_feedback_success"] = False
         st.session_state.response_processing = False
-        st.session_state.warning_message = True
         st.experimental_rerun()  # Re-run the script to re-enable buttons
 
 if st.session_state.show_feedback:
@@ -355,3 +355,18 @@ if st.session_state.warning_message:
 # Ensure the clear chat button remains visible at the bottom of the response only after authentication
 if "token" in st.session_state:
     st.button("Clear Chat", on_click=clear_chat_history)
+
+# Add a JavaScript component to scroll to the top of the response container
+scroll_to_top_js = """
+<script>
+function scrollToTop() {
+    var chatMessages = document.getElementsByClassName("css-1oe3j0t e1ewe7hr3");
+    if (chatMessages.length > 0) {
+        chatMessages[0].scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+}
+scrollToTop();
+</script>
+"""
+
+components.html(scroll_to_top_js)
