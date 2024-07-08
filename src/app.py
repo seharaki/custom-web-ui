@@ -25,6 +25,20 @@ hide_streamlit_style = """
         """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+# Styling for thumbs up and thumbs down buttons
+st.markdown("""
+<style>
+.element-container:has(#thumbs-up-span) + div button {
+    background-color: green !important;
+    font-size: 24px !important;
+}
+.element-container:has(#thumbs-down-span) + div button {
+    background-color: red !important;
+    font-size: 24px !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Safety Messaging
 safety_message = 'X'
 
@@ -258,24 +272,8 @@ if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
     feedback_type = None
 
-    # Add unique classes to the buttons
-    st.markdown(
-        """
-        <style>
-        .thumbs-up-container button {
-            background-color: green !important;
-            font-size: 24px !important;
-        }
-        .thumbs-down-container button {
-            background-color: red !important;
-            font-size: 24px !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
     with col1:
+        st.markdown('<span id="thumbs-up-span"></span>', unsafe_allow_html=True)
         if st.button("👍", key="thumbs_up"):
             feedback_type = "👍 Thumbs Up"
             st.session_state["feedback_type"] = feedback_type
@@ -293,6 +291,7 @@ if st.session_state.show_feedback:
             st.experimental_rerun()
 
     with col2:
+        st.markdown('<span id="thumbs-down-span"></span>', unsafe_allow_html=True)
         if st.button("👎", key="thumbs_down"):
             feedback_type = "👎 Thumbs Down"
             st.session_state["feedback_type"] = feedback_type
