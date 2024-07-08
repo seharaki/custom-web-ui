@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-
 import jwt
 import jwt.algorithms
 import streamlit as st  # all streamlit commands will be available through the "st" alias
@@ -176,6 +175,7 @@ else:
 
     if help_modal.is_open():
         with help_modal.container():
+            st.image("help.png")  # Display the image inside the modal
             st.write("Here is how to use this chatbot, click the FAQs at the top")
 
     if "messages" not in st.session_state or not st.session_state.messages:
