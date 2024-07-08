@@ -31,17 +31,17 @@ st.markdown("""
 <style>
 .element-container:has(#thumbs-up-span) + div button {
     background-color: green !important;
-    font-size: 24px !important;
+    font-size: 32px !important;
 }
 .element-container:has(#thumbs-down-span) + div button {
     background-color: red !important;
-    font-size: 24px !important;
+    font-size: 32px !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # Modal setup
-help_modal = Modal("Help Modal", key="help-modal", padding=20, max_width=744)
+help_modal = Modal("How to use the chatbot?", key="help-modal", padding=20, max_width=744)
 
 # Safety Messaging
 safety_message = 'X'
