@@ -246,6 +246,7 @@ if st.session_state.authenticated:  # Only show chat input if authenticated
         st.session_state["show_feedback"] = False
 
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+    st.session_state.response_processing = True
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             placeholder = st.empty()
