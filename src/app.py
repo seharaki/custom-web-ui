@@ -240,10 +240,10 @@ if st.session_state.authenticated:  # Only show chat input if authenticated
     if prompt := st.chat_input(key="chat_input"):
         st.session_state.user_prompt = prompt
         st.session_state.messages.append({"role": "user", "content": prompt})
+        st.session_state.response_processing = True  # Disable buttons when user sends a message
         with st.chat_message("user"):
             st.write(prompt)
         st.session_state["show_feedback"] = False
-        st.session_state.response_processing = True
 
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     with st.chat_message("assistant"):
