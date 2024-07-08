@@ -182,7 +182,7 @@ def encode_urls_in_references(references):
     encoded_references = parts[0]
     for part in parts[1:]:
         end_pos = part.find("\n")
-        if end_pos == -1, options={"verify_signature": False}:
+        if end_pos == -1:
             end_pos = len(part)
         url = part[:end_pos]
         rest = part[end_pos:]
@@ -220,10 +220,11 @@ else:
     # Automatic token refresh
     refresh_token_if_needed()
 
-    col1, col2 = st.columns([1, 3])
+    col1, col2, col3 = st.columns([1, 1, 3])
 
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
+    with col2:
         if st.button("Help"):
             st.markdown("<script>openModal()</script>", unsafe_allow_html=True)
 
