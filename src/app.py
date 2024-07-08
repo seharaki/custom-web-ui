@@ -5,6 +5,7 @@ import streamlit as st  # all streamlit commands will be available through the "
 import utils
 from streamlit_feedback import streamlit_feedback
 from streamlit_modal import Modal
+from PIL import Image
 
 UTC = timezone.utc
 
@@ -175,7 +176,8 @@ else:
 
     if help_modal.is_open():
         with help_modal.container():
-            st.image("help.png")  # Display the image inside the modal
+            help_image = Image.open("help.png")  # Load the image from the same directory
+            st.image(help_image)  # Display the image inside the modal
             st.write("Here is how to use this chatbot, click the FAQs at the top")
 
     if "messages" not in st.session_state or not st.session_state.messages:
