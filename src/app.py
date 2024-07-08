@@ -258,14 +258,15 @@ if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
     feedback_type = None
 
+    # Add unique classes to the buttons
     st.markdown(
         """
         <style>
-        .feedback-up button {
+        .thumbs-up-container button {
             background-color: green !important;
             font-size: 24px !important;
         }
-        .feedback-down button {
+        .thumbs-down-container button {
             background-color: red !important;
             font-size: 24px !important;
         }
@@ -274,24 +275,27 @@ if st.session_state.show_feedback:
         unsafe_allow_html=True
     )
 
-    if col1.button("👍", key="thumbs_up", use_container_width=True, css_class="feedback-up"):
-        feedback_type = "👍 Thumbs Up"
-        st.session_state["feedback_type"] = feedback_type
-        utils.store_feedback(
-            user_email=user_email,
-            conversation_id=st.session_state["conversationId"],
-            parent_message_id=st.session_state["parentMessageId"],
-            user_message=st.session_state.user_prompt,
-            feedback={"type": feedback_type},
-            config=config_agent
-        )
-        st.session_state["show_feedback"] = False
-        st.session_state["feedback_type"] = ""
-        st.session_state["show_feedback_success"] = True
-        st.experimental_rerun()
-    if col2.button("👎", key="thumbs_down", use_container_width=True, css_class="feedback-down"):
-        feedback_type = "👎 Thumbs Down"
-        st.session_state["feedback_type"] = feedback_type
+    with col1:
+        if st.button("👍", key="thumbs_up"):
+            feedback_type = "👍 Thumbs Up"
+            st.session_state["feedback_type"] = feedback_type
+            utils.store_feedback(
+                user_email=user_email,
+                conversation_id=st.session_state["conversationId"],
+                parent_message_id=st.session_state["parentMessageId"],
+                user_message=st.session_state.user_prompt,
+                feedback={"type": feedback_type},
+                config=config_agent
+            )
+            st.session_state["show_feedback"] = False
+            st.session_state["feedback_type"] = ""
+            st.session_state["show_feedback_success"] = True
+            st.experimental_rerun()
+
+    with col2:
+        if st.button("👎", key="thumbs_down"):
+            feedback_type = "👎 Thumbs Down"
+            st.session_state["feedback_type"] = feedback_type
 
     additional_feedback = ""
 
