@@ -1,4 +1,3 @@
-import concurrent.futures
 import datetime
 import logging
 import os
@@ -46,6 +45,7 @@ def retrieve_config_from_agent():
     """
     Retrieve the configuration from the agent
     """
+    st.warning("retrieving config")
     config = urllib3.request(
         "GET",
         f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}",
@@ -104,7 +104,6 @@ def assume_role_with_token(iam_token, config: Config):
         ],
     )
     st.session_state.aws_credentials = response["Credentials"]
-
 # This method create the Q client
 def get_qclient(idc_id_token: str, config: Config):
     """
@@ -123,10 +122,15 @@ def get_qclient(idc_id_token: str, config: Config):
     amazon_q = session.client("qbusiness", config.REGION)
     return amazon_q
 
-def chat_sync_async(amazon_q, prompt_input, conversation_id, parent_message_id, config):
+# This code invoke chat_sync api and format the response for UI
+def get_queue_chain(
+    prompt_input, conversation_id, parent_message_id, token, config:Config
+):
     """
-    Run chat_sync asynchronously
+    This method is used to get the answer from the queue chain.
     """
+    amazon_q = get_qclient(token, config)
+    start_time = time.time()
     if conversation_id != "":
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID,
@@ -138,22 +142,6 @@ def chat_sync_async(amazon_q, prompt_input, conversation_id, parent_message_id, 
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
         )
-    return answer
-
-# This code invoke chat_sync api and format the response for UI
-def get_queue_chain(
-    prompt_input, conversation_id, parent_message_id, token, config: Config
-):
-    """
-    This method is used to get the answer from the queue chain.
-    """
-    amazon_q = get_qclient(token, config)
-    start_time = time.time()
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        future = executor.submit(chat_sync_async, amazon_q, prompt_input, conversation_id, parent_message_id, config)
-        answer = future.result()
-
     end_time = time.time()
     duration = end_time - start_time
 
