@@ -31,11 +31,11 @@ st.markdown("""
 <style>
 .element-container:has(#thumbs-up-span) + div button {
     font-size: 32px !important;
-    width: 150px !important;  /* Adjust the width as needed */
+    width: 120px !important;  /* Adjust the width as needed */
 }
 .element-container:has(#thumbs-down-span) + div button {
     font-size: 32px !important;
-    width: 150px !important;  /* Adjust the width as needed */
+    width: 120px !important;  /* Adjust the width as needed */
 }
 </style>
 """, unsafe_allow_html=True)
