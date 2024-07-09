@@ -30,11 +30,9 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.markdown("""
 <style>
 .element-container:has(#thumbs-up-span) + div button {
-    background-color: green !important;
     font-size: 32px !important;
 }
 .element-container:has(#thumbs-down-span) + div button {
-    background-color: red !important;
     font-size: 32px !important;
 }
 </style>
@@ -295,7 +293,7 @@ if st.session_state.show_feedback:
 
     with col1:
         st.markdown('<span id="thumbs-up-span"></span>', unsafe_allow_html=True)
-        if st.button("👍", key="thumbs_up"):
+        if st.button("👍Thumbs Up", key="thumbs_up"):
             feedback_type = "👍 Thumbs Up"
             st.session_state["feedback_type"] = feedback_type
             utils.store_feedback(
@@ -313,7 +311,7 @@ if st.session_state.show_feedback:
 
     with col2:
         st.markdown('<span id="thumbs-down-span"></span>', unsafe_allow_html=True)
-        if st.button("👎", key="thumbs_down"):
+        if st.button("👎Thumbs Down", key="thumbs_down"):
             feedback_type = "👎 Thumbs Down"
             st.session_state["feedback_type"] = feedback_type
 
