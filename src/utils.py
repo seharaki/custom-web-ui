@@ -1,3 +1,4 @@
+import concurrent.futures
 import datetime
 import logging
 import os
@@ -122,29 +123,37 @@ def get_qclient(idc_id_token: str, config: Config):
     amazon_q = session.client("qbusiness", config.REGION)
     return amazon_q
 
+def chat_sync_async(amazon_q, prompt_input, conversation_id, parent_message_id, config):
+    """
+    Run chat_sync asynchronously
+    """
+    if conversation_id != "":
+        answer = amazon_q.chat_sync(
+            applicationId=config.AMAZON_Q_APP_ID,
+            userMessage=prompt_input,
+            conversationId=conversation_id,
+            parentMessageId=parent_message_id,
+        )
+    else:
+        answer = amazon_q.chat_sync(
+            applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
+        )
+    return answer
+
 # This code invoke chat_sync api and format the response for UI
 def get_queue_chain(
-    prompt_input, conversation_id, parent_message_id, token, config:Config
+    prompt_input, conversation_id, parent_message_id, token, config: Config
 ):
     """
     This method is used to get the answer from the queue chain.
     """
     amazon_q = get_qclient(token, config)
     start_time = time.time()
-    try:
-        if conversation_id != "":
-                answer = amazon_q.chat_sync(
-                    applicationId=config.AMAZON_Q_APP_ID,
-                    userMessage=prompt_input,
-                    conversationId=conversation_id,
-                    parentMessageId=parent_message_id,
-                )
-        else:
-            answer = amazon_q.chat_sync(
-                applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
-            )
-    except:
-        st.rerun()
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(chat_sync_async, amazon_q, prompt_input, conversation_id, parent_message_id, config)
+        answer = future.result()
+
     end_time = time.time()
     duration = end_time - start_time
 

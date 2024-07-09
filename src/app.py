@@ -132,9 +132,11 @@ def encode_urls_in_references(references):
         end_pos = part.find("\n")
         if end_pos == -1:
             end_pos = len(part)
-        url = part[:end_pos]
-        rest = part[end_pos:]
+        url = part[:end_pos].strip()
+        if url.endswith(".json"):
+            url = url[:-5]  # Remove '.json' from the end of the URL
         encoded_url = url.replace(' ', '%20')
+        rest = part[end_pos:]
         encoded_references += "URL: " + encoded_url + rest
     return encoded_references
 
