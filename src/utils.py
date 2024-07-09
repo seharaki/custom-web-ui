@@ -45,7 +45,6 @@ def retrieve_config_from_agent():
     """
     Retrieve the configuration from the agent
     """
-    st.warning("retrieving config")
     config = urllib3.request(
         "GET",
         f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}",
@@ -144,6 +143,7 @@ def get_queue_chain(
         )
     end_time = time.time()
     duration = end_time - start_time
+    st.warning(duration)
 
     system_message = answer.get("systemMessage", "")
     conversation_id = answer.get("conversationId", "")
