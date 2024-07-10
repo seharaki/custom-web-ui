@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import jwt
+import jwt.algorithms
 import streamlit as st  # all streamlit commands will be available through the "st" alias
 import utils
 from streamlit_feedback import streamlit_feedback
@@ -29,13 +30,12 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.markdown("""
 <style>
 .element-container:has(#thumbs-up-span) + div button {
+    background-color: green !important;
     font-size: 32px !important;
-    width: 100% !important;  /* Adjust the width as needed */
-    margin-right: 2px !important;  /* Add margin to separate buttons */
 }
 .element-container:has(#thumbs-down-span) + div button {
+    background-color: red !important;
     font-size: 32px !important;
-    width: 130% !important;  /* Adjust the width as needed */
 }
 </style>
 """, unsafe_allow_html=True)
@@ -85,6 +85,8 @@ if "warning_message" not in st.session_state:
     st.session_state.warning_message = False
 if "rerun" not in st.session_state:
     st.session_state.rerun = False
+if "clear_chat" not in st.session_state:
+    st.session_state.clear_chat = False
 
 # Define a function to clear the chat history
 def clear_chat_history():
@@ -248,60 +250,55 @@ for message in st.session_state.messages:
 
 # User-provided prompt
 if st.session_state.authenticated:  # Only show chat input if authenticated
-    if prompt := st.chat_input(key="chat_input", disabled=st.session_state.thinking):
+    if prompt := st.chat_input(key="chat_input"):
         st.session_state.user_prompt = prompt
         st.session_state.messages.append({"role": "user", "content": prompt})
-        st.session_state.thinking = True  # Disable chat input when user sends a message
+        st.session_state.thinking = True  # Disable buttons when user sends a message
         st.rerun()
 
-# JavaScript for focusing the chat input
-focus_chat_input = """
-<script>
-const chatInputInterval = setInterval(function() {
-    let chatInput = document.querySelector('textarea[data-testid="stChatInputTextArea"]');
-    if (chatInput && !chatInput.disabled) {
-        chatInput.focus();
-        clearInterval(chatInputInterval);
-    }
-}, 1000);
-</script>
-"""
-st.markdown(focus_chat_input, unsafe_allow_html=True)
+if st.session_state.clear_chat:
+    clear_chat_history()
+    st.session_state.clear_chat = False
 
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     st.session_state.thinking = True
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             placeholder = st.empty()
-            response = utils.get_queue_chain(
-                st.session_state.user_prompt,
-                st.session_state["conversationId"],
-                st.session_state["parentMessageId"],
-                st.session_state["idc_jwt_token"]["idToken"],
-                config_agent
-            )
-            if "references" in response:
-                full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
-            else:
-                full_response = f"""{response["answer"]}\n\n---\nNo sources"""
-            placeholder.markdown(full_response)
-            st.session_state["conversationId"] = response["conversationId"]
-            st.session_state["parentMessageId"] = response["parentMessageId"]
+            try:
+                response = utils.get_queue_chain(
+                    st.session_state.user_prompt,
+                    st.session_state["conversationId"],
+                    st.session_state["parentMessageId"],
+                    st.session_state["idc_jwt_token"]["idToken"],
+                    config_agent
+                )
+                if "references" in response:
+                    full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
+                else:
+                    full_response = f"""{response["answer"]}\n\n---\nNo sources"""
+                placeholder.markdown(full_response)
+                st.session_state["conversationId"] = response["conversationId"]
+                st.session_state["parentMessageId"] = response["parentMessageId"]
 
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
-        utils.store_message_response(
-            user_email=user_email,
-            conversation_id=st.session_state["conversationId"],
-            parent_message_id=st.session_state["parentMessageId"],
-            user_message=st.session_state.user_prompt,
-            response=response,
-            config=config_agent
-        )
-        st.session_state["show_feedback"] = True
-        st.session_state["show_feedback_success"] = False
-        st.session_state.thinking = False
-        st.session_state.warning_message = True
-        st.rerun()  # Re-run the script to re-enable chat input
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+                utils.store_message_response(
+                    user_email=user_email,
+                    conversation_id=st.session_state["conversationId"],
+                    parent_message_id=st.session_state["parentMessageId"],
+                    user_message=st.session_state.user_prompt,
+                    response=response,
+                    config=config_agent
+                )
+                st.session_state["show_feedback"] = True
+                st.session_state["show_feedback_success"] = False
+                st.session_state.thinking = False
+                st.session_state.warning_message = True
+                st.rerun()  # Re-run the script to re-enable buttons
+            except utils.amazon_q.exceptions.ValidationException as e:
+                if "Incorrect previous message Id" in str(e):
+                    st.session_state.clear_chat = True
+                    st.error("An error occurred due to incorrect previous message ID. The chat history has been cleared. Please try again.")
 
 if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
@@ -309,7 +306,7 @@ if st.session_state.show_feedback:
 
     with col1:
         st.markdown('<span id="thumbs-up-span"></span>', unsafe_allow_html=True)
-        if st.button("👍 Thumbs Up", key="thumbs_up"):
+        if st.button("👍", key="thumbs_up"):
             feedback_type = "👍 Thumbs Up"
             st.session_state["feedback_type"] = feedback_type
             utils.store_feedback(
@@ -327,7 +324,7 @@ if st.session_state.show_feedback:
 
     with col2:
         st.markdown('<span id="thumbs-down-span"></span>', unsafe_allow_html=True)
-        if st.button("👎 Thumbs Down", key="thumbs_down"):
+        if st.button("👎", key="thumbs_down"):
             feedback_type = "👎 Thumbs Down"
             st.session_state["feedback_type"] = feedback_type
 
