@@ -119,7 +119,6 @@ def get_qclient(idc_id_token: str, config: Config):
         aws_secret_access_key=st.session_state.aws_credentials["SecretAccessKey"],
         aws_session_token=st.session_state.aws_credentials["SessionToken"],
     )
-    st.warning(f"Current Region {config.REGION}")
     amazon_q = session.client("qbusiness", config.REGION)
     return amazon_q
 
@@ -135,7 +134,8 @@ def get_queue_chain(
     start_time = time.time()
     st.warning(f"After time")
     if conversation_id != "":
-        st.warning(f"with Converstaion")
+        st.warning(f"with Converstaion and region {config.REGION}")
+        amazon_q = get_qclient(token, config)
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID,
             userMessage=prompt_input,
@@ -143,7 +143,7 @@ def get_queue_chain(
             parentMessageId=parent_message_id,
         )
     else:
-        st.warning(f"without Converstaion")
+        st.warning(f"without Converstaion and region {config.REGION}")
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input)
 
