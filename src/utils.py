@@ -11,6 +11,7 @@ import urllib3
 from streamlit_oauth import OAuth2Component
 from collections import namedtuple
 from datetime import datetime, timezone
+from botocore.exceptions import NoRegionError
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -121,7 +122,7 @@ def get_qclient(idc_id_token: str, config: Config):
     )
     try:
         amazon_q = session.client("qbusiness", config.REGION)
-    except boto3.client("qbusiness").exceptions.NoRegionError:
+    except NoRegionError:
         st.warning("No region using default")
         amazon_q = session.client("qbusiness", "us-east-1")
 
