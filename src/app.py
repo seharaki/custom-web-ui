@@ -271,19 +271,18 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             except ClientError as e:
                 if e.response['Error']['Code'] == 'ValidationException':
                     error_message = str(e)
-                    if "Incorrect previous message Id" in error_message:
-                        # Retry the request with updated parentMessageId
-                        st.warning("Clearing Issue")
-                        st.session_state["conversationId"] = ""
-                        response = utils.get_queue_chain(
-                            st.session_state.user_prompt,
-                            st.session_state["conversationId"],
-                            st.session_state["parentMessageId"],
-                            st.session_state["idc_jwt_token"]["idToken"],
-                            config_agent
-                        )
-                    else:
-                        raise e
+                    # Retry the request with updated parentMessageId
+                    st.warning("Clearing Issue")
+                    st.session_state["conversationId"] = ""
+                    response = utils.get_queue_chain(
+                        st.session_state.user_prompt,
+                        st.session_state["conversationId"],
+                        st.session_state["parentMessageId"],
+                        st.session_state["idc_jwt_token"]["idToken"],
+                        config_agent
+                    )
+                else:
+                    raise e
                             
             if response:
                 if "references" in response:
