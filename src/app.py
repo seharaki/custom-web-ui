@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, timezone
 import jwt
-import jwt.algorithms
 import streamlit as st  # all streamlit commands will be available through the "st" alias
 import utils
 from streamlit_feedback import streamlit_feedback
@@ -249,10 +248,10 @@ for message in st.session_state.messages:
 
 # User-provided prompt
 if st.session_state.authenticated:  # Only show chat input if authenticated
-    if prompt := st.chat_input(key="chat_input"):
+    if prompt := st.chat_input(key="chat_input", disabled=st.session_state.thinking):
         st.session_state.user_prompt = prompt
         st.session_state.messages.append({"role": "user", "content": prompt})
-        st.session_state.thinking = True  # Disable buttons when user sends a message
+        st.session_state.thinking = True  # Disable chat input when user sends a message
         st.rerun()
 
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
@@ -288,7 +287,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         st.session_state["show_feedback_success"] = False
         st.session_state.thinking = False
         st.session_state.warning_message = True
-        st.rerun()  # Re-run the script to re-enable buttons
+        st.rerun()  # Re-run the script to re-enable chat input
 
 if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
