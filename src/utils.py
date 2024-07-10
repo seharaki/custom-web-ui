@@ -110,6 +110,7 @@ def get_qclient(idc_id_token: str, config: Config):
     """
     Create the Q client using the identity-aware AWS Session.
     """
+    amazon_q = None
     if not st.session_state.aws_credentials:
         assume_role_with_token(idc_id_token, config)
     elif st.session_state.aws_credentials["Expiration"] < datetime.now(UTC):
