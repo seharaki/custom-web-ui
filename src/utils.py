@@ -140,19 +140,34 @@ def get_queue_chain(
     st.warning(f"Calling Converstaion")
     start_time = time.time()
     st.warning(f"After time")
-    if conversation_id != "":
-        st.warning(f"with Converstaion and region {config.REGION}")
-        answer = amazon_q.chat_sync(
-            applicationId=config.AMAZON_Q_APP_ID,
-            userMessage=prompt_input,
-            conversationId=conversation_id,
-            parentMessageId=parent_message_id,
-        )
-        st.warning(f"with Converstaion and region AFter {config.REGION}")
-    else:
-        st.warning(f"without Converstaion and region {config.REGION}")
-        answer = amazon_q.chat_sync(
-            applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input)
+    try:
+        if conversation_id != "":
+            answer = amazon_q.chat_sync(
+                applicationId=config.AMAZON_Q_APP_ID,
+                userMessage=prompt_input,
+                conversationId=conversation_id,
+                parentMessageId=parent_message_id,
+            )
+        else:
+            answer = amazon_q.chat_sync(
+                applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
+            )
+    except NoRegionError:
+        st.warning("No Region, calling fix")
+        # Recreate the client
+        amazon_q = get_qclient(token, config)
+        # Retry the call
+        if conversation_id != "":
+            answer = amazon_q.chat_sync(
+                applicationId=config.AMAZON_Q_APP_ID,
+                userMessage=prompt_input,
+                conversationId=conversation_id,
+                parentMessageId=parent_message_id,
+            )
+        else:
+            answer = amazon_q.chat_sync(
+                applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
+            )
 
     end_time = time.time()
     duration = end_time - start_time
