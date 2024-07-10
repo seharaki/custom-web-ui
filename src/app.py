@@ -269,7 +269,6 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                 )
             except Exception as e:
                 error_message = str(e)
-                st.session_state["parentMessageId"] = ""
                 config_agent = utils.retrieve_config_from_agent()
                 response = utils.get_queue_chain(
                     st.session_state.user_prompt,
