@@ -119,7 +119,12 @@ def get_qclient(idc_id_token: str, config: Config):
         aws_secret_access_key=st.session_state.aws_credentials["SecretAccessKey"],
         aws_session_token=st.session_state.aws_credentials["SessionToken"],
     )
-    amazon_q = session.client("qbusiness", config.REGION)
+    try:
+        amazon_q = session.client("qbusiness", config.REGION)
+    except boto3.client("qbusiness").exceptions.NoRegionError:
+        st.warning("No region using default")
+        amazon_q = session.client("qbusiness", "us-east-1")
+
     return amazon_q
 
 # This code invokes chat_sync API and formats the response for UI
