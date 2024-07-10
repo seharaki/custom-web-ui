@@ -135,13 +135,13 @@ def get_queue_chain(
     st.warning(f"After time")
     if conversation_id != "":
         st.warning(f"with Converstaion and region {config.REGION}")
-        amazon_q = get_qclient(token, config)
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID,
             userMessage=prompt_input,
             conversationId=conversation_id,
             parentMessageId=parent_message_id,
         )
+        st.warning(f"with Converstaion and region AFter {config.REGION}")
     else:
         st.warning(f"without Converstaion and region {config.REGION}")
         answer = amazon_q.chat_sync(
