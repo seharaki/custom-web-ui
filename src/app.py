@@ -269,20 +269,16 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                 )
             except utils.boto3.client("qbusiness").exceptions.ValidationException as e:
                 error_message = str(e)
-                if "Incorrect previous message Id" in error_message:
-                    # Retry the request with updated parentMessageId
-                    st.session_state["parentMessageId"] = ""
-                    config_agent = utils.retrieve_config_from_agent()
-                    response = utils.get_queue_chain(
-                        st.session_state.user_prompt,
-                        st.session_state["conversationId"],
-                        st.session_state["parentMessageId"],
-                        st.session_state["idc_jwt_token"]["idToken"],
-                        config_agent
+                st.session_state["parentMessageId"] = ""
+                config_agent = utils.retrieve_config_from_agent()
+                response = utils.get_queue_chain(
+                    st.session_state.user_prompt,
+                    st.session_state["conversationId"],
+                    st.session_state["parentMessageId"],
+                    st.session_state["idc_jwt_token"]["idToken"],
+                    config_agent
                     )
-                else:
-                    raise e
-            
+                            
             if response:
                 if "references" in response:
                     full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
