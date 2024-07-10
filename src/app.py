@@ -257,10 +257,11 @@ if st.session_state.authenticated:  # Only show chat input if authenticated
 # JavaScript for focusing the chat input
 focus_chat_input = """
 <script>
-setInterval(function() {
-    let chatInput = document.querySelector('textarea[data-testid="stChatInput"]');
+const chatInputInterval = setInterval(function() {
+    let chatInput = document.querySelector('textarea[data-baseweb="textarea"]');
     if (chatInput && !chatInput.disabled) {
         chatInput.focus();
+        clearInterval(chatInputInterval);
     }
 }, 1000);
 </script>
