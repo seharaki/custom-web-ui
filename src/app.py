@@ -130,8 +130,7 @@ def encode_urls_in_references(references):
     encoded_references = parts[0]
     for part in parts[1:]:
         end_pos = part.find("\n")
-        if end_pos == -1:
-            end_pos = len(part)
+        if end_pos == -1, end_pos = len(part)
         url = part[:end_pos].strip()
         if url.endswith(".json"):
             url = url[:-5]  # Remove '.json' from the end of the URL
@@ -253,6 +252,19 @@ if st.session_state.authenticated:  # Only show chat input if authenticated
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.session_state.thinking = True  # Disable chat input when user sends a message
         st.rerun()
+
+# JavaScript for focusing the chat input
+focus_chat_input = """
+<script>
+setInterval(function() {
+    let chatInput = document.querySelector('textarea[data-testid="stChatInput"]');
+    if (chatInput && !chatInput.disabled) {
+        chatInput.focus();
+    }
+}, 1000);
+</script>
+"""
+st.markdown(focus_chat_input, unsafe_allow_html=True)
 
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     st.session_state.thinking = True
