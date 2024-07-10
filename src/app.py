@@ -328,34 +328,34 @@ if st.session_state.show_feedback:
     with col2:
         st.markdown('<span id="thumbs-down-span"></span>', unsafe_allow_html=True)
         if st.button("👎 Thumbs Down", key="thumbs_down"):
-            feedback type = "👎 Thumbs Down"
-            st.session_state["feedback_type"] = feedback type
+            feedback_type = "👎 Thumbs Down"
+            st.session_state["feedback_type"] = feedback_type
 
-    additional feedback = ""
+    additional_feedback = ""
 
     if st.session_state.get("feedback_type") == "👎 Thumbs Down":
-        feedback reason = st.selectbox(
+        feedback_reason = st.selectbox(
             "Please select the reason for your feedback:",
             ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"],
             key="feedback_selectbox"
         )
-        if feedback reason == "Other":
-            additional feedback = st.text input("Please provide additional feedback:", key="additional_feedback_input")
+        if feedback_reason == "Other":
+            additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback_input")
 
         if st.button("Submit Feedback", key="submit_feedback_button"):
-            if feedback reason == "Other" and not additional feedback:
+            if feedback_reason == "Other" and not additional_feedback:
                 st.warning("Please provide additional feedback for 'Other'.")
             else:
-                feedback details = feedback reason
-                if additional feedback:
-                    feedback details = additional feedback
+                feedback_details = feedback_reason
+                if additional_feedback:
+                    feedback_details = additional_feedback
 
                 utils.store_feedback(
                     user_email=user_email,
-                    conversation id=st.session_state["conversationId"],
-                    parent message id=st.session_state["parentMessageId"],
-                    user message=st.session_state.user_prompt,
-                    feedback={"type": st.session_state["feedback_type"], "reason": feedback details},
+                    conversation_id=st.session_state["conversationId"],
+                    parent_message_id=st.session_state["parentMessageId"],
+                    user_message=st.session_state.user_prompt,
+                    feedback={"type": st.session_state["feedback_type"], "reason": feedback_details},
                     config=config_agent
                 )
                 st.session_state["show_feedback"] = False
