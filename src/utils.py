@@ -131,25 +131,16 @@ def get_queue_chain(
     """
     amazon_q = get_qclient(token, config)
     start_time = time.time()
-    try:
-        if conversation_id != "":
-            answer = amazon_q.chat_sync(
-                applicationId=config.AMAZON_Q_APP_ID,
-                userMessage=prompt_input,
-                conversationId=conversation_id,
-                parentMessageId=parent_message_id,
-            )
-        else:
-            answer = amazon_q.chat_sync(
-                applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
-            )
-    except amazon_q.exceptions.ValidationException as e:
-        error_message = str(e)
-        if "Incorrect previous message Id" in error_message:
-            st.session_state.user_prompt = ""
-            st.session_state.parentMessageId = ""
-            st.error("Error: Incorrect previous message Id. Please try again.")
-        raise e
+    if conversation_id != "":
+        answer = amazon_q.chat_sync(
+            applicationId=config.AMAZON_Q_APP_ID,
+            userMessage=prompt_input,
+            conversationId=conversation_id,
+            parentMessageId=parent_message_id,
+        )
+    else:
+        answer = amazon_q.chat_sync(
+            applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input)
 
     end_time = time.time()
     duration = end_time - start_time
