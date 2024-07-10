@@ -259,35 +259,55 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             placeholder = st.empty()
-            response = utils.get_queue_chain(
-                st.session_state.user_prompt,
-                st.session_state["conversationId"],
-                st.session_state["parentMessageId"],
-                st.session_state["idc_jwt_token"]["idToken"],
-                config_agent
-            )
-            if "references" in response:
-                full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
-            else:
-                full_response = f"""{response["answer"]}\n\n---\nNo sources"""
-            placeholder.markdown(full_response)
-            st.session_state["conversationId"] = response["conversationId"]
-            st.session_state["parentMessageId"] = response["parentMessageId"]
+            try:
+                response = utils.get_queue_chain(
+                    st.session_state.user_prompt,
+                    st.session_state["conversationId"],
+                    st.session_state["parentMessageId"],
+                    st.session_state["idc_jwt_token"]["idToken"],
+                    config_agent
+                )
+            except utils.boto3.client("qbusiness").exceptions.ValidationException as e:
+                error_message = str(e)
+                if "Incorrect previous message Id" in error_message:
+                    # Retry the request with updated parentMessageId
+                    st.session_state["parentMessageId"] = ""
+                    response = utils.get_queue_chain(
+                        st.session_state.user_prompt,
+                        st.session_state["conversationId"],
+                        st.session_state["parentMessageId"],
+                        st.session_state["idc_jwt_token"]["idToken"],
+                        config_agent
+                    )
+                else:
+                    raise e
+            
+            if response:
+                if "references" in response:
+                    full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
+                else:
+                    full_response = f"""{response["answer"]}\n\n---\nNo sources"""
+                placeholder.markdown(full_response)
+                st.session_state["conversationId"] = response["conversationId"]
+                st.session_state["parentMessageId"] = response["parentMessageId"]
 
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
-        utils.store_message_response(
-            user_email=user_email,
-            conversation_id=st.session_state["conversationId"],
-            parent_message_id=st.session_state["parentMessageId"],
-            user_message=st.session_state.user_prompt,
-            response=response,
-            config=config_agent
-        )
-        st.session_state["show_feedback"] = True
-        st.session_state["show_feedback_success"] = False
-        st.session_state.thinking = False
-        st.session_state.warning_message = True
-        st.rerun()  # Re-run the script to re-enable buttons
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+                utils.store_message_response(
+                    user_email=user_email,
+                    conversation_id=st.session_state["conversationId"],
+                    parent_message_id=st.session_state["parentMessageId"],
+                    user_message=st.session_state.user_prompt,
+                    response=response,
+                    config=config_agent
+                )
+                st.session_state["show_feedback"] = True
+                st.session_state["show_feedback_success"] = False
+                st.session_state.thinking = False
+                st.session_state.warning_message = True
+                st.rerun()  # Re-run the script to re-enable buttons
+            else:
+                st.error("Failed to get a response. Please try again.")
+                st.session_state.thinking = False
 
 if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
