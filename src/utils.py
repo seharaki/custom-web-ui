@@ -119,6 +119,8 @@ def get_qclient(idc_id_token: str, config: Config):
         aws_secret_access_key=st.session_state.aws_credentials["SecretAccessKey"],
         aws_session_token=st.session_state.aws_credentials["SessionToken"],
     )
+    if config.REGION == "":
+        config.REGION = "us-east-1"
     amazon_q = session.client("qbusiness", config.REGION)
     return amazon_q
 
