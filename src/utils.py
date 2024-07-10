@@ -11,7 +11,6 @@ import urllib3
 from streamlit_oauth import OAuth2Component
 from collections import namedtuple
 from datetime import datetime, timezone
-from botocore.exceptions import NoRegionError
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -121,11 +120,8 @@ def get_qclient(idc_id_token: str, config: Config):
         aws_secret_access_key=st.session_state.aws_credentials["SecretAccessKey"],
         aws_session_token=st.session_state.aws_credentials["SessionToken"],
     )
-    try:
-        amazon_q = session.client("qbusiness", config.REGION)
-    except NoRegionError:
-        st.warning("No region using default")
-        amazon_q = session.client("qbusiness", "us-east-1")
+    
+    amazon_q = session.client("qbusiness", config.REGION)
 
     return amazon_q
 
@@ -140,34 +136,19 @@ def get_queue_chain(
     st.warning(f"Calling Converstaion")
     start_time = time.time()
     st.warning(f"After time")
-    try:
-        if conversation_id != "":
-            answer = amazon_q.chat_sync(
-                applicationId=config.AMAZON_Q_APP_ID,
-                userMessage=prompt_input,
-                conversationId=conversation_id,
-                parentMessageId=parent_message_id,
-            )
-        else:
-            answer = amazon_q.chat_sync(
-                applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
-            )
-    except NoRegionError:
-        st.warning("No Region, calling fix")
-        # Recreate the client
-        amazon_q = get_qclient(token, config)
-        # Retry the call
-        if conversation_id != "":
-            answer = amazon_q.chat_sync(
-                applicationId=config.AMAZON_Q_APP_ID,
-                userMessage=prompt_input,
-                conversationId=conversation_id,
-                parentMessageId=parent_message_id,
-            )
-        else:
-            answer = amazon_q.chat_sync(
-                applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
-            )
+    if conversation_id != "":
+        st.warning(f"with Converstaion and region {config.REGION}")
+        answer = amazon_q.chat_sync(
+            applicationId=config.AMAZON_Q_APP_ID,
+            userMessage=prompt_input,
+            conversationId=conversation_id,
+            parentMessageId=parent_message_id,
+        )
+        st.warning(f"with Converstaion and region AFter {config.REGION}")
+    else:
+        st.warning(f"without Converstaion and region {config.REGION}")
+        answer = amazon_q.chat_sync(
+            applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input)
 
     end_time = time.time()
     duration = end_time - start_time

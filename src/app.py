@@ -6,6 +6,7 @@ import utils
 from streamlit_feedback import streamlit_feedback
 from streamlit_modal import Modal
 from PIL import Image
+from botocore.exceptions import ClientError
 
 UTC = timezone.utc
 
@@ -267,9 +268,12 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                     st.session_state["idc_jwt_token"]["idToken"],
                     config_agent
                 )
-            except utils.boto3.client("qbusiness").exceptions.ValidationException as e:
-                error_message = str(e)
-                st.rerun()
+            except ClientError as e:
+                if e.response['Error']['Code'] == 'ValidationException':
+                    st.warning("Clearing issue")
+                    st.rerun()
+                else:
+                    raise e
                             
             if response:
                 if "references" in response:
