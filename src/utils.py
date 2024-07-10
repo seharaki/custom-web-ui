@@ -104,7 +104,7 @@ def assume_role_with_token(iam_token, config: Config):
     )
     st.session_state.aws_credentials = response["Credentials"]
 
-# This method create the Q client
+# This method creates the Q client
 def get_qclient(idc_id_token: str, config: Config):
     """
     Create the Q client using the identity-aware AWS Session.
@@ -122,16 +122,16 @@ def get_qclient(idc_id_token: str, config: Config):
     amazon_q = session.client("qbusiness", config.REGION)
     return amazon_q
 
-# This code invoke chat_sync api and format the response for UI
+# This code invokes chat_sync API and formats the response for UI
 def get_queue_chain(
     prompt_input, conversation_id, parent_message_id, token, config: Config
 ):
     """
     This method is used to get the answer from the queue chain.
     """
+    amazon_q = get_qclient(token, config)
+    start_time = time.time()
     try:
-        amazon_q = get_qclient(token, config)
-        start_time = time.time()
         if conversation_id != "":
             answer = amazon_q.chat_sync(
                 applicationId=config.AMAZON_Q_APP_ID,
@@ -143,67 +143,70 @@ def get_queue_chain(
             answer = amazon_q.chat_sync(
                 applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input
             )
-        end_time = time.time()
-        duration = end_time - start_time
-        st.warning(duration)
-
-        system_message = answer.get("systemMessage", "")
-        conversation_id = answer.get("conversationId", "")
-        parent_message_id = answer.get("systemMessageId", "")
-        result = {
-            "answer": system_message,
-            "conversationId": conversation_id,
-            "parentMessageId": parent_message_id,
-            "duration": Decimal(duration)  # Convert duration to Decimal
-        }
-
-        if answer.get("sourceAttributions"):
-            attributions = answer["sourceAttributions"]
-            valid_attributions = []
-
-            # Generate the answer references extracting citation number,
-            # the document title, and if present, the document url
-            for attr in attributions:
-                title = attr.get("title", "")
-                url = attr.get("url", "")
-                citation_number = attr.get("citationNumber", "")
-                attribution_text = []
-                if citation_number:
-                    attribution_text.append(f"[{citation_number}]")
-                if title:
-                    attribution_text.append(f"Title: {title}")
-                if url:
-                    attribution_text.append(f", URL: {url}")
-
-                valid_attributions.append("".join(attribution_text))
-
-            concatenated_attributions = "\n\n".join(valid_attributions)
-            result["references"] = concatenated_attributions
-
-            # Process the citation numbers and insert them into the system message
-            citations = {}
-            for attr in answer["sourceAttributions"]:
-                for segment in attr["textMessageSegments"]:
-                    citations[segment["endOffset"]] = attr["citationNumber"]
-            offset_citations = sorted(citations.items(), key=lambda x: x[0])
-            modified_message = ""
-            prev_offset = 0
-
-            for offset, citation_number in offset_citations:
-                modified_message += (
-                    system_message[prev_offset:offset] + f"[{citation_number}]"
-                )
-                prev_offset = offset
-
-            modified_message += system_message[prev_offset:]
-            result["answer"] = modified_message
-
-        return result
-
     except amazon_q.exceptions.ValidationException as e:
-        if "Incorrect previous message Id" in str(e):
-            st.session_state.clear_chat = True
+        error_message = str(e)
+        if "Incorrect previous message Id" in error_message:
+            st.session_state.user_prompt = ""
+            st.session_state.parentMessageId = ""
+            st.error("Error: Incorrect previous message Id. Please try again.")
         raise e
+
+    end_time = time.time()
+    duration = end_time - start_time
+    st.warning(duration)
+
+    system_message = answer.get("systemMessage", "")
+    conversation_id = answer.get("conversationId", "")
+    parent_message_id = answer.get("systemMessageId", "")
+    result = {
+        "answer": system_message,
+        "conversationId": conversation_id,
+        "parentMessageId": parent_message_id,
+        "duration": Decimal(duration)  # Convert duration to Decimal
+    }
+
+    if answer.get("sourceAttributions"):
+        attributions = answer["sourceAttributions"]
+        valid_attributions = []
+
+        # Generate the answer references extracting citation number,
+        # the document title, and if present, the document URL
+        for attr in attributions:
+            title = attr.get("title", "")
+            url = attr.get("url", "")
+            citation_number = attr.get("citationNumber", "")
+            attribution_text = []
+            if citation_number:
+                attribution_text.append(f"[{citation_number}]")
+            if title:
+                attribution_text.append(f"Title: {title}")
+            if url:
+                attribution_text.append(f", URL: {url}")
+
+            valid_attributions.append("".join(attribution_text))
+
+        concatenated_attributions = "\n\n".join(valid_attributions)
+        result["references"] = concatenated_attributions
+
+        # Process the citation numbers and insert them into the system message
+        citations = {}
+        for attr in answer["sourceAttributions"]:
+            for segment in attr["textMessageSegments"]:
+                citations[segment["endOffset"]] = attr["citationNumber"]
+        offset_citations = sorted(citations.items(), key=lambda x: x[0])
+        modified_message = ""
+        prev_offset = 0
+
+        for offset, citation_number in offset_citations:
+            modified_message += (
+                system_message[prev_offset:offset] + f"[{citation_number}]"
+            )
+            prev_offset = offset
+
+        modified_message += system_message[prev_offset:]
+        result["answer"] = modified_message
+
+    return result
 
 def store_feedback(user_email, conversation_id, parent_message_id, user_message, feedback, config: Config):
     try:
