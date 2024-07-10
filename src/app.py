@@ -267,7 +267,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                     st.session_state["idc_jwt_token"]["idToken"],
                     config_agent
                 )
-            except utils.boto3.client("qbusiness").exceptions.ValidationException as e:
+            except Exception as e:
                 error_message = str(e)
                 st.session_state["parentMessageId"] = ""
                 config_agent = utils.retrieve_config_from_agent()
