@@ -403,3 +403,18 @@ if st.session_state.warning_message:
 # Ensure the clear chat button remains visible at the bottom of the response only after authentication
 if "token" in st.session_state:
     st.button("Clear Chat", on_click=clear_chat_history)
+
+# Center the Start Chatting button
+st.markdown("""
+    <style>
+        .center-button {
+            display: flex;
+            justify-content: center;
+        }
+        .center-button button {
+            display: block;
+            margin: auto;
+        }
+    </style>
+    <div class="center-button">
+    """, unsafe_allow_html=True)
