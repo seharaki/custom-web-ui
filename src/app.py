@@ -178,7 +178,7 @@ else:
 
     if help_modal.is_open():
         with help_modal.container():
-            help_image_path = "help.png"  # Path to the image
+            help_image_path = "help.jpg"  # Path to the image
             help_image = load_image_with_retry(help_image_path)
             if help_image:
                 st.image(help_image)
