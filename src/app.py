@@ -136,12 +136,17 @@ def refresh_token_if_needed():
                     del st.session_state["refresh_token"]
                 st.rerun()
 
-def load_image_with_retry(image_path, retries=3, delay=1):
+def load_image_with_retry(image_path, retries=3, delay=1, initial_delay=1):
+    time.sleep(initial_delay)  # Add an initial delay before the first attempt
     for attempt in range(retries):
         try:
             with Image.open(image_path) as image:
-                return image.copy()
-        except (UnidentifiedImageError, FileNotFoundError) as e:
+                # Verify that the image is not broken
+                image.verify()
+                # If the image is valid, re-open and return it
+                with Image.open(image_path) as valid_image:
+                    return valid_image.copy()
+        except (UnidentifiedImageError, FileNotFoundError, IOError) as e:
             if attempt < retries - 1:
                 time.sleep(delay)
             else:
