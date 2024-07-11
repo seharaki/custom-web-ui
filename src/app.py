@@ -304,8 +304,8 @@ if st.session_state.show_feedback:
                 parent_message_id=st.session_state["parentMessageId"],
                 user_message=st.session_state.user_prompt,
                 feedback={"type": feedback_type},
-                response=response["answer"],  # Pass the last assistant message as the response
-                references=response["references"],  # Pass the references if available
+                response=st.session_state.messages[-1],  # Pass the last assistant message as the response
+                references=st.session_state.messages[-1].get("references", ""),  # Pass the references if available
                 config=config_agent
             )
             st.session_state["show_feedback"] = False
