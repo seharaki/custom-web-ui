@@ -304,6 +304,8 @@ if st.session_state.show_feedback:
                 parent_message_id=st.session_state["parentMessageId"],
                 user_message=st.session_state.user_prompt,
                 feedback={"type": feedback_type},
+                response=st.session_state.messages[-1]["content"],  # Pass the last assistant message as the response
+                references=st.session_state.messages[-1].get("references", ""),  # Pass the references if available
                 config=config_agent
             )
             st.session_state["show_feedback"] = False
@@ -335,13 +337,14 @@ if st.session_state.show_feedback:
                 feedback_details = feedback_reason
                 if additional_feedback:
                     feedback_details = additional_feedback
-
                 utils.store_feedback(
                     user_email=user_email,
                     conversation_id=st.session_state["conversationId"],
                     parent_message_id=st.session_state["parentMessageId"],
                     user_message=st.session_state.user_prompt,
                     feedback={"type": st.session_state["feedback_type"], "reason": feedback_details},
+                    response=st.session_state.messages[-1]["content"],  # Pass the last assistant message as the response
+                    references=st.session_state.messages[-1].get("references", ""),  # Pass the references if available
                     config=config_agent
                 )
                 st.session_state["show_feedback"] = False

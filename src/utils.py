@@ -207,7 +207,7 @@ def get_queue_chain(
 
     return result
 
-def store_feedback(user_email, conversation_id, parent_message_id, user_message, feedback, config: Config):
+def store_feedback(user_email, conversation_id, parent_message_id, user_message, feedback, response, references, config: Config):
     try:
         dynamodb = boto3.resource('dynamodb', region_name=config.REGION)
         qbusiness_table = dynamodb.Table(Q_TABLE_NAME)
@@ -218,6 +218,8 @@ def store_feedback(user_email, conversation_id, parent_message_id, user_message,
                 'ParentMessageId': parent_message_id,
                 'UserMessage': user_message,
                 'Feedback': feedback,
+                'Response': response,
+                'References': references,
                 'Timestamp': datetime.now(tz=UTC).isoformat()
             }
         )
