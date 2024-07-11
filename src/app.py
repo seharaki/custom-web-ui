@@ -1,18 +1,17 @@
 from datetime import datetime, timedelta, timezone
 import jwt
-import streamlit as st
+import jwt.algorithms
+import streamlit as st  # all streamlit commands will be available through the "st" alias
 import utils
 from streamlit_feedback import streamlit_feedback
 from streamlit_modal import Modal
-from PIL import Image, UnidentifiedImageError
-from botocore.exceptions import ClientError
-import time
+from PIL import Image
 
 UTC = timezone.utc
 
 # Title
 title = "X"
-help_message = "Here is how to use this chatbot, click the FAQs at the top"
+help_message = "X"
 # Page Styling Configuration
 st.set_page_config(page_title=title, layout="wide")
 
@@ -26,16 +25,6 @@ hide_streamlit_style = """
         </style>
         """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-st.markdown("""
-<style>
-button[data-testid="baseButton-secondary"] p {
-    font-size: 24px !important;  /* Adjust the value as needed */
-    padding: 10px;  /* Adjust the padding as needed */
-}
-</style>
-""", unsafe_allow_html=True)
-
 
 # Styling for thumbs up and thumbs down buttons
 st.markdown("""
@@ -136,22 +125,20 @@ def refresh_token_if_needed():
                     del st.session_state["refresh_token"]
                 st.rerun()
 
-def load_image_with_retry(image_path, retries=3, delay=1, initial_delay=1):
-    time.sleep(initial_delay)  # Add an initial delay before the first attempt
-    for attempt in range(retries):
-        try:
-            with Image.open(image_path) as image:
-                # Verify that the image is not broken
-                image.verify()
-                # If the image is valid, re-open and return it
-                with Image.open(image_path) as valid_image:
-                    return valid_image.copy()
-        except (UnidentifiedImageError, FileNotFoundError, IOError) as e:
-            if attempt < retries - 1:
-                time.sleep(delay)
-            else:
-                st.error(f"Failed to load image after {retries} attempts. Please try again later.")
-                return None
+def encode_urls_in_references(references):
+    parts = references.split("URL: ")
+    encoded_references = parts[0]
+    for part in parts[1:]:
+        end_pos = part.find("\n")
+        if end_pos == -1:
+            end_pos = len(part)
+        url = part[:end_pos].strip()
+        if url.endswith(".json"):
+            url = url[:-5]  # Remove '.json' from the end of the URL
+        encoded_url = url.replace(' ', '%20')
+        rest = part[end_pos:]
+        encoded_references += "URL: " + encoded_url + rest
+    return encoded_references
 
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
@@ -193,11 +180,9 @@ else:
 
     if help_modal.is_open():
         with help_modal.container():
-            help_image_path = "help.jpg"  # Path to the image
-            help_image = load_image_with_retry(help_image_path)
-            if help_image:
-                st.image(help_image)
-            st.write(help_message)
+            help_image = Image.open("help.png")  # Load the image from the same directory
+            st.image(help_image)  # Display the image inside the modal
+            st.write("Here is how to use this chatbot, click the FAQs at the top")
 
     if "messages" not in st.session_state or not st.session_state.messages:
         st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
@@ -274,56 +259,35 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             placeholder = st.empty()
-            try:
-                response = utils.get_queue_chain(
-                    st.session_state.user_prompt,
-                    st.session_state["conversationId"],
-                    st.session_state["parentMessageId"],
-                    st.session_state["idc_jwt_token"]["idToken"],
-                    config_agent
-                )
-            except ClientError as e:
-                if e.response['Error']['Code'] == 'ValidationException':
-                    error_message = str(e)
-                    # Retry the request with updated parentMessageId
-                    st.warning("Clearing Issue")
-                    st.session_state["conversationId"] = ""
-                    response = utils.get_queue_chain(
-                        st.session_state.user_prompt,
-                        st.session_state["conversationId"],
-                        st.session_state["parentMessageId"],
-                        st.session_state["idc_jwt_token"]["idToken"],
-                        config_agent
-                    )
-                else:
-                    raise e
-                            
-            if response:
-                if "references" in response:
-                    full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
-                else:
-                    full_response = f"""{response["answer"]}\n\n---\nNo sources"""
-                placeholder.markdown(full_response)
-                st.session_state["conversationId"] = response["conversationId"]
-                st.session_state["parentMessageId"] = response["parentMessageId"]
-
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
-                utils.store_message_response(
-                    user_email=user_email,
-                    conversation_id=st.session_state["conversationId"],
-                    parent_message_id=st.session_state["parentMessageId"],
-                    user_message=st.session_state.user_prompt,
-                    response=response,
-                    config=config_agent
-                )
-                st.session_state["show_feedback"] = True
-                st.session_state["show_feedback_success"] = False
-                st.session_state.thinking = False
-                st.session_state.warning_message = True
-                st.rerun()  # Re-run the script to re-enable buttons
+            response = utils.get_queue_chain(
+                st.session_state.user_prompt,
+                st.session_state["conversationId"],
+                st.session_state["parentMessageId"],
+                st.session_state["idc_jwt_token"]["idToken"],
+                config_agent
+            )
+            if "references" in response:
+                full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
             else:
-                st.error("Failed to get a response. Please try again.")
-                st.session_state.thinking = False
+                full_response = f"""{response["answer"]}\n\n---\nNo sources"""
+            placeholder.markdown(full_response)
+            st.session_state["conversationId"] = response["conversationId"]
+            st.session_state["parentMessageId"] = response["parentMessageId"]
+
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
+        utils.store_message_response(
+            user_email=user_email,
+            conversation_id=st.session_state["conversationId"],
+            parent_message_id=st.session_state["parentMessageId"],
+            user_message=st.session_state.user_prompt,
+            response=response,
+            config=config_agent
+        )
+        st.session_state["show_feedback"] = True
+        st.session_state["show_feedback_success"] = False
+        st.session_state.thinking = False
+        st.session_state.warning_message = True
+        st.rerun()  # Re-run the script to re-enable buttons
 
 if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
