@@ -57,6 +57,10 @@ if "aws_credentials" not in st.session_state:
 # Initialize session state variables
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "response" not in st.session_state:
+    st.session_state.response = ""
+if "resources" not in st.session_state:
+    st.session_state.resources = ""
 if "clicked_samples" not in st.session_state:
     st.session_state.clicked_samples = []
 if "conversationId" not in st.session_state:
@@ -273,6 +277,8 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             placeholder.markdown(full_response)
             st.session_state["conversationId"] = response["conversationId"]
             st.session_state["parentMessageId"] = response["parentMessageId"]
+            st.session_state.response = response["answer"]
+            st.session_state.resources = encode_urls_in_references(response["references"])
 
         st.session_state.messages.append({"role": "assistant", "content": full_response})
         utils.store_message_response(
@@ -304,8 +310,8 @@ if st.session_state.show_feedback:
                 parent_message_id=st.session_state["parentMessageId"],
                 user_message=st.session_state.user_prompt,
                 feedback={"type": feedback_type},
-                response=st.session_state.messages[-1],  # Pass the last assistant message as the response
-                references=st.session_state.messages[-1].get("references", ""),  # Pass the references if available
+                response=st.session_state.response,
+                references=st.session_state.resources,
                 config=config_agent
             )
             st.session_state["show_feedback"] = False
@@ -343,8 +349,8 @@ if st.session_state.show_feedback:
                     parent_message_id=st.session_state["parentMessageId"],
                     user_message=st.session_state.user_prompt,
                     feedback={"type": st.session_state["feedback_type"], "reason": feedback_details},
-                    response=st.session_state.messages[-1]["content"],  # Pass the last assistant message as the response
-                    references=st.session_state.messages[-1].get("references", ""),  # Pass the references if available
+                    response=st.session_state.response
+                    references=st.session_state.references
                     config=config_agent
                 )
                 st.session_state["show_feedback"] = False
