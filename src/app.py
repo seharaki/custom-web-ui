@@ -8,18 +8,18 @@ from streamlit_feedback import streamlit_feedback
 from streamlit_modal import Modal
 from PIL import Image, UnidentifiedImageError
 from botocore.exceptions import ClientError
- 
+
 UTC = timezone.utc
- 
+
 # Title
 title = "x"
 help_message = "X"
- 
+
 # Page Styling Configuration
 st.set_page_config(page_title=title, layout="wide")
- 
+
 st.title(title)
- 
+
 # Hide Streamlit ... Menu
 hide_streamlit_style = """
         <style>
@@ -28,7 +28,7 @@ hide_streamlit_style = """
         </style>
         """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
- 
+
 # Styling for thumbs up and thumbs down buttons
 st.markdown("""
 <style>
@@ -43,21 +43,21 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
- 
+
 # Modal setup
 help_modal = Modal("How to use the chatbot?", key="help-modal", padding=15,max_width=950)
- 
+
 # Safety Messaging
 safety_message = "X"
- 
+
 # Show Session Time
 session_toggle = False
- 
+
 # Init configuration
 config_agent = utils.retrieve_config_from_agent()
 if "aws_credentials" not in st.session_state:
     st.session_state.aws_credentials = None
- 
+
 # Initialize session state variables
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -93,7 +93,7 @@ if "warning_message" not in st.session_state:
     st.session_state.warning_message = False
 if "rerun" not in st.session_state:
     st.session_state.rerun = False
- 
+
 # Define a function to clear the chat history
 def clear_chat_history():
     st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
@@ -103,14 +103,16 @@ def clear_chat_history():
     st.session_state["chat_history"] = []
     st.session_state["conversationId"] = ""
     st.session_state["parentMessageId"] = ""
- 
+    st.session_state["show_feedback_success"] = False
+    st.session_state["warning_message"] = False
+
 def get_remaining_session_time():
     if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
         expires_at = st.session_state["idc_jwt_token"]["expires_at"]
         remaining_time = expires_at - datetime.now(tz=UTC)
         return remaining_time
     return None
- 
+
 def refresh_token_if_needed():
     if "idc_jwt_token" in st.session_state:
         remaining_time = get_remaining_session_time()
@@ -132,7 +134,7 @@ def refresh_token_if_needed():
                 if "refresh_token" in st.session_state:
                     del st.session_state["refresh_token"]
                 st.rerun()
- 
+
 def encode_urls_in_references(references):
     parts = references.split("URL: ")
     encoded_references = parts[0]
@@ -147,7 +149,7 @@ def encode_urls_in_references(references):
         rest = part[end_pos:]
         encoded_references += "URL: " + encoded_url + rest
     return encoded_references
- 
+
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
     redirect_uri = f"https://{config_agent.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
@@ -174,33 +176,33 @@ else:
         st.error("No refresh token available. Please log in again.")
         del st.session_state["token"]
         st.rerun()
- 
+
     # Automatic token refresh
     refresh_token_if_needed()
     col1, col2, col3 = st.columns([1, 1, 3])
- 
+
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
         open_help_modal = st.button("Help", disabled=st.session_state.thinking)
         if open_help_modal:
             help_modal.open()
- 
+
     if help_modal.is_open():
         with help_modal.container():
             help_image = Image.open("help.jpg")  # Load the image from the same directory
             st.image(help_image)  # Display the image inside the modal
             st.write("Here is how to use this chatbot, click the FAQs at the top")
- 
+
     if "messages" not in st.session_state or not st.session_state.messages:
         st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
- 
+
     # Display remaining session time
     remaining_time = get_remaining_session_time()
     if remaining_time:
         if session_toggle:
             st.info(f"Session expires in: {remaining_time}")
- 
+
     # Define sample questions
     sample_questions = [
         "What A?",
@@ -209,7 +211,7 @@ else:
         "What D?",
         "What E?"
     ]
- 
+
     # Display sample question buttons
     st.markdown(
         """
@@ -234,26 +236,26 @@ else:
             help="Click to ask",
             on_click=lambda q=question: set_rerun_flag(q)
         )
- 
+
 def set_rerun_flag(question):
     st.session_state.clicked_samples.append(question)
     st.session_state.user_prompt = question
     st.session_state.messages.append({"role": "user", "content": question})
     st.session_state.thinking = True
     st.session_state.rerun = True
- 
+
 if st.session_state.rerun:
     st.session_state.rerun = False
     st.rerun()
- 
+
 # Add a horizontal line after the sample questions
 st.markdown("<hr>", unsafe_allow_html=True)
- 
+
 # Display the chat messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
- 
+
 # User-provided prompt
 if st.session_state.authenticated:  # Only show chat input if authenticated
     if prompt := st.chat_input(key="chat_input"):
@@ -261,7 +263,7 @@ if st.session_state.authenticated:  # Only show chat input if authenticated
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.session_state.thinking = True  # Disable buttons when user sends a message
         st.rerun()
- 
+
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     st.session_state.thinking = True
     with st.chat_message("assistant"):
@@ -289,7 +291,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                     )
                 else:
                     raise e
-               
+
             if "references" in response:
                 full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
                 st.session_state.resources = encode_urls_in_references(response["references"])
@@ -299,7 +301,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             st.session_state["conversationId"] = response["conversationId"]
             st.session_state["parentMessageId"] = response["parentMessageId"]
             st.session_state.response = response["answer"]
- 
+
         st.session_state.messages.append({"role": "assistant", "content": full_response})
         utils.store_message_response(
             user_email=user_email,
@@ -314,11 +316,11 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         st.session_state.thinking = False
         st.session_state.warning_message = True
         st.rerun()  # Re-run the script to re-enable buttons
- 
+
 if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
     feedback_type = None
- 
+
     with col1:
         st.markdown('<span id="thumbs-up-span"></span>', unsafe_allow_html=True)
         if st.button("👍 Thumbs Up", key="thumbs_up"):
@@ -338,15 +340,15 @@ if st.session_state.show_feedback:
             st.session_state["feedback_type"] = ""
             st.session_state["show_feedback_success"] = True
             st.rerun()
- 
+
     with col2:
         st.markdown('<span id="thumbs-down-span"></span>', unsafe_allow_html=True)
         if st.button("👎 Thumbs Down", key="thumbs_down"):
             feedback_type = "👎 Thumbs Down"
             st.session_state["feedback_type"] = feedback_type
- 
+
     additional_feedback = ""
- 
+
     if st.session_state.get("feedback_type") == "👎 Thumbs Down":
         feedback_reason = st.selectbox(
             "Please select the reason for your feedback:",
@@ -355,7 +357,7 @@ if st.session_state.show_feedback:
         )
         if feedback_reason == "Other":
             additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback_input")
- 
+
         if st.button("Submit Feedback", key="submit_feedback_button"):
             if feedback_reason == "Other" and not additional_feedback:
                 st.warning("Please provide additional feedback for 'Other'.")
@@ -381,13 +383,28 @@ if st.session_state.show_feedback:
                 st.session_state.resources = ""
                 st.session_state["show_feedback_success"] = True
                 st.rerun()
- 
+
 if st.session_state.show_feedback_success:
     st.success("Thank you for your feedback!")
- 
+
 if st.session_state.warning_message:
     st.warning(safety_message, icon="🚨")
- 
+
 # Ensure the clear chat button remains visible at the bottom of the response only after authentication
 if "token" in st.session_state:
     st.button("Clear Chat", on_click=clear_chat_history)
+
+# Center the Start Chatting button
+st.markdown("""
+    <div style='text-align: center;'>
+        <style>
+            .center-button {
+                display: inline-block;
+                margin: 0 auto;
+            }
+        </style>
+        <div class="center-button">
+            {}
+        </div>
+    </div>
+    """.format(oauth2.authorize_button("Start Chatting", scope="openid email offline_access", pkce="S256", redirect_uri=redirect_uri)), unsafe_allow_html=True)
