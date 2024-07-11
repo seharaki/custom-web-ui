@@ -357,6 +357,8 @@ if st.session_state.show_feedback:
                 st.session_state["feedback_type"] = ""
                 st.session_state["feedback_reason"] = ""
                 st.session_state["additional_feedback"] = ""
+                st.session_state.response = ""
+                st.session_state.resources = ""
                 st.session_state["show_feedback_success"] = True
                 st.rerun()
 
