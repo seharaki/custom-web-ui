@@ -349,8 +349,8 @@ if st.session_state.show_feedback:
                     parent_message_id=st.session_state["parentMessageId"],
                     user_message=st.session_state.user_prompt,
                     feedback={"type": st.session_state["feedback_type"], "reason": feedback_details},
-                    response=st.session_state.response
-                    references=st.session_state.references
+                    response=st.session_state.response,
+                    references=st.session_state.resources,
                     config=config_agent
                 )
                 st.session_state["show_feedback"] = False
