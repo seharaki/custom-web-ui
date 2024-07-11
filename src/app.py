@@ -13,6 +13,7 @@ UTC = timezone.utc
 # Title
 title = "X"
 help_message = "Here is how to use this chatbot, click the FAQs at the top"
+
 # Page Styling Configuration
 st.set_page_config(page_title=title, layout="wide")
 
@@ -137,6 +138,7 @@ def refresh_token_if_needed():
                 st.rerun()
 
 def load_image_with_retry(image_path, retries=3, delay=1):
+    st.warning("loading image")
     for attempt in range(retries):
         try:
             with Image.open(image_path) as image:
@@ -147,6 +149,9 @@ def load_image_with_retry(image_path, retries=3, delay=1):
             else:
                 st.error(f"Failed to load image after {retries} attempts. Please try again later.")
                 return None
+
+help_image_path = "help.jpg"  # Path to the image
+help_image = load_image_with_retry(help_image_path)
 
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
@@ -188,8 +193,6 @@ else:
 
     if help_modal.is_open():
         with help_modal.container():
-            help_image_path = "help.jpg"  # Path to the image
-            help_image = load_image_with_retry(help_image_path)
             if help_image:
                 st.image(help_image)
             st.write(help_message)
