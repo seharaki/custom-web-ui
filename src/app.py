@@ -138,9 +138,8 @@ def refresh_token_if_needed():
                 st.rerun()
 
 def load_image_with_retry(image_path, retries=3, delay=1):
-    st.warning("loading")
-    st.rerun()
     for attempt in range(retries):
+        st.warning(f"loading trial {attempt}")
         try:
             with Image.open(image_path) as image:
                 return image.copy()
