@@ -1,18 +1,18 @@
 from datetime import datetime, timedelta, timezone
 import jwt
-import jwt.algorithms
-import streamlit as st  # all streamlit commands will be available through the "st" alias
+import streamlit as st
 import utils
 from streamlit_feedback import streamlit_feedback
 from streamlit_modal import Modal
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from botocore.exceptions import ClientError
+import time
 
 UTC = timezone.utc
 
 # Title
 title = "X"
-help_message = "X"
+help_message = "Here is how to use this chatbot, click the FAQs at the top"
 # Page Styling Configuration
 st.set_page_config(page_title=title, layout="wide")
 
@@ -126,20 +126,17 @@ def refresh_token_if_needed():
                     del st.session_state["refresh_token"]
                 st.rerun()
 
-def encode_urls_in_references(references):
-    parts = references.split("URL: ")
-    encoded_references = parts[0]
-    for part in parts[1:]:
-        end_pos = part.find("\n")
-        if end_pos == -1:
-            end_pos = len(part)
-        url = part[:end_pos].strip()
-        if url.endswith(".json"):
-            url = url[:-5]  # Remove '.json' from the end of the URL
-        encoded_url = url.replace(' ', '%20')
-        rest = part[end_pos:]
-        encoded_references += "URL: " + encoded_url + rest
-    return encoded_references
+def load_image_with_retry(image_path, retries=3, delay=1):
+    for attempt in range(retries):
+        try:
+            with Image.open(image_path) as image:
+                return image
+        except (UnidentifiedImageError, FileNotFoundError) as e:
+            if attempt < retries - 1:
+                time.sleep(delay)
+            else:
+                st.error(f"Failed to load image after {retries} attempts. Please try again later.")
+                return None
 
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
@@ -181,9 +178,11 @@ else:
 
     if help_modal.is_open():
         with help_modal.container():
-            help_image = Image.open("help.png")  # Load the image from the same directory
-            st.image(help_image)  # Display the image inside the modal
-            st.write("Here is how to use this chatbot, click the FAQs at the top")
+            help_image_path = "help.png"  # Path to the image
+            help_image = load_image_with_retry(help_image_path)
+            if help_image:
+                st.image(help_image)
+            st.write(help_message)
 
     if "messages" not in st.session_state or not st.session_state.messages:
         st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
