@@ -153,17 +153,7 @@ def encode_urls_in_references(references):
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
     redirect_uri = f"https://{config_agent.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
-    st.markdown("""
-    <style>
-    .center-button {
-        display: flex;
-        justify-content: center;
-    }
-    </style>
-    <div class="center-button">
-    """, unsafe_allow_html=True)
     result = oauth2.authorize_button("Start Chatting", scope="openid email offline_access", pkce="S256", redirect_uri=redirect_uri)
-    st.markdown("</div>", unsafe_allow_html=True)
     if result and "token" in result:
         # If authorization successful, save token in session state
         st.session_state.token = result.get("token")
@@ -331,68 +321,71 @@ if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
     feedback_type = None
 
-    with col1:
-        st.markdown('<span id="thumbs-up-span"></span>', unsafe_allow_html=True)
-        if st.button("👍 Thumbs Up", key="thumbs_up"):
-            feedback_type = "👍 Thumbs Up"
-            st.session_state["feedback_type"] = feedback_type
-            utils.store_feedback(
-                user_email=user_email,
-                conversation_id=st.session_state["conversationId"],
-                parent_message_id=st.session_state["parentMessageId"],
-                user_message=st.session_state.user_prompt,
-                feedback={"type": feedback_type},
-                response=st.session_state.response,
-                references=st.session_state.resources,
-                config=config_agent
-            )
-            st.session_state["show_feedback"] = False
-            st.session_state["feedback_type"] = ""
-            st.session_state["show_feedback_success"] = True
-            st.rerun()
-
-    with col2:
-        st.markdown('<span id="thumbs-down-span"></span>', unsafe_allow_html=True)
-        if st.button("👎 Thumbs Down", key="thumbs_down"):
-            feedback_type = "👎 Thumbs Down"
-            st.session_state["feedback_type"] = feedback_type
-
-    additional_feedback = ""
-
-    if st.session_state.get("feedback_type") == "👎 Thumbs Down":
-        feedback_reason = st.selectbox(
-            "Please select the reason for your feedback:",
-            ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"],
-            key="feedback_selectbox"
-        )
-        if feedback_reason == "Other":
-            additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback_input")
-
-        if st.button("Submit Feedback", key="submit_feedback_button"):
-            if feedback_reason == "Other" and not additional_feedback:
-                st.warning("Please provide additional feedback for 'Other'.")
-            else:
-                feedback_details = feedback_reason
-                if additional_feedback:
-                    feedback_details = additional_feedback
+    # Ensure the thumbs up and thumbs down buttons do not show for the initial message
+    last_message = st.session_state.messages[-1]["content"] if st.session_state.messages else ""
+    if last_message != "How may I assist you today?":
+        with col1:
+            st.markdown('<span id="thumbs-up-span"></span>', unsafe_allow_html=True)
+            if st.button("👍 Thumbs Up", key="thumbs_up"):
+                feedback_type = "👍 Thumbs Up"
+                st.session_state["feedback_type"] = feedback_type
                 utils.store_feedback(
                     user_email=user_email,
                     conversation_id=st.session_state["conversationId"],
                     parent_message_id=st.session_state["parentMessageId"],
                     user_message=st.session_state.user_prompt,
-                    feedback={"type": st.session_state["feedback_type"], "reason": feedback_details},
+                    feedback={"type": feedback_type},
                     response=st.session_state.response,
                     references=st.session_state.resources,
                     config=config_agent
                 )
                 st.session_state["show_feedback"] = False
                 st.session_state["feedback_type"] = ""
-                st.session_state["feedback_reason"] = ""
-                st.session_state["additional_feedback"] = ""
-                st.session_state.response = ""
-                st.session_state.resources = ""
                 st.session_state["show_feedback_success"] = True
                 st.rerun()
+
+        with col2:
+            st.markdown('<span id="thumbs-down-span"></span>', unsafe_allow_html=True)
+            if st.button("👎 Thumbs Down", key="thumbs_down"):
+                feedback_type = "👎 Thumbs Down"
+                st.session_state["feedback_type"] = feedback_type
+
+        additional_feedback = ""
+
+        if st.session_state.get("feedback_type") == "👎 Thumbs Down":
+            feedback_reason = st.selectbox(
+                "Please select the reason for your feedback:",
+                ["Not Relevant/Off Topic", "Not Accurate", "Not Enough Information", "Other"],
+                key="feedback_selectbox"
+            )
+            if feedback_reason == "Other":
+                additional_feedback = st.text_input("Please provide additional feedback:", key="additional_feedback_input")
+
+            if st.button("Submit Feedback", key="submit_feedback_button"):
+                if feedback_reason == "Other" and not additional_feedback:
+                    st.warning("Please provide additional feedback for 'Other'.")
+                else:
+                    feedback_details = feedback_reason
+                    if additional_feedback:
+                        feedback_details = additional_feedback
+                    utils.store_feedback(
+                        user_email=user_email,
+                        conversation_id=st.session_state["conversationId"],
+                        parent_message_id=st.session_state["parentMessageId"],
+                        user_message=st.session_state.user_prompt,
+                        feedback={"type": st.session_state["feedback_type"], "reason": feedback_details},
+                        response=st.session_state.response,
+                        references=st.session_state.resources,
+                        config=config_agent
+                    )
+                    st.session_state["show_feedback"] = False
+                    st.session_state["feedback_type"] = ""
+                    st.session_state["feedback_reason"] = ""
+                    st.session_state["additional_feedback"] = ""
+                    st.session_state.response = ""
+                    st.session_state.resources = ""
+                    st.session_state["show_feedback_success"] = True
+                    st.rerun()
 
 if st.session_state.show_feedback_success:
     st.success("Thank you for your feedback!")
@@ -403,18 +396,3 @@ if st.session_state.warning_message:
 # Ensure the clear chat button remains visible at the bottom of the response only after authentication
 if "token" in st.session_state:
     st.button("Clear Chat", on_click=clear_chat_history)
-
-# Center the Start Chatting button
-st.markdown("""
-    <style>
-        .center-button {
-            display: flex;
-            justify-content: center;
-        }
-        .center-button button {
-            display: block;
-            margin: auto;
-        }
-    </style>
-    <div class="center-button">
-    """, unsafe_allow_html=True)
