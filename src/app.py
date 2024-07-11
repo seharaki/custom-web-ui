@@ -27,6 +27,14 @@ hide_streamlit_style = """
         """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+st.markdown("""
+<style>
+.modal-close-button {
+    font-size: 50px !important;  /* Adjust the value as needed */
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Styling for thumbs up and thumbs down buttons
 st.markdown("""
 <style>
