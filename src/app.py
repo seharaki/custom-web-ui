@@ -272,13 +272,13 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             )
             if "references" in response:
                 full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
+                st.session_state.resources = encode_urls_in_references(response["references"])
             else:
                 full_response = f"""{response["answer"]}\n\n---\nNo sources"""
             placeholder.markdown(full_response)
             st.session_state["conversationId"] = response["conversationId"]
             st.session_state["parentMessageId"] = response["parentMessageId"]
             st.session_state.response = response["answer"]
-            st.session_state.resources = encode_urls_in_references(response["references"])
 
         st.session_state.messages.append({"role": "assistant", "content": full_response})
         utils.store_message_response(
