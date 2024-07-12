@@ -157,7 +157,7 @@ if "token" not in st.session_state:
     redirect_uri = f"https://{config_agent.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
     st.warning(st.session_state["oauth_init"])
     if st.session_state["oauth_init"] == False:
-        #st.rerun()
+        st.rerun()
         st.warning(st.session_state["oauth_init"] == False)
         st.session_state.oauth_init = True
         st.warning(st.session_state["oauth_init"] == False)
