@@ -156,12 +156,12 @@ oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
     redirect_uri = f"https://{config_agent.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
     st.warning(st.session_state["oauth_init"])
+    result = oauth2.authorize_button("Start Chatting", scope="openid email offline_access", pkce="S256", redirect_uri=redirect_uri)
     if st.session_state["oauth_init"] == False:
         st.rerun()
         st.warning(st.session_state["oauth_init"] == False)
         st.session_state.oauth_init = True
         st.warning(st.session_state["oauth_init"] == False)
-    result = oauth2.authorize_button("Start Chatting", scope="openid email offline_access", pkce="S256", redirect_uri=redirect_uri)
     if result and "token" in result:
         # If authorization successful, save token in session state
         st.session_state.token = result.get("token")
