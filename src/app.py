@@ -51,7 +51,7 @@ def display_help_modal():
 
     if help_modal.is_open():
         with help_modal.container():
-            st.image("./static/help.jpg")  # Reference the image from the static directory
+            st.image("static/help.jpg")  # Reference the image from the static directory
             st.write("Here is how to use this chatbot, click the FAQs at the top")
 
 # Call the function to display the help modal
