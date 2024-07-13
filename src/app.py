@@ -1,12 +1,9 @@
 from datetime import datetime, timedelta, timezone
 import jwt
-import jwt.algorithms
 import streamlit as st
 import utils
-import time
-from streamlit_feedback import streamlit_feedback
 from streamlit_modal import Modal
-from PIL import Image, UnidentifiedImageError
+from PIL import Image
 from botocore.exceptions import ClientError
 
 UTC = timezone.utc
@@ -44,8 +41,29 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Path to the help image
+help_image_path = "help.jpg"
+
 # Modal setup
-help_modal = Modal("How to use the chatbot?", key="help-modal", padding=15,max_width=950)
+help_modal = Modal("How to use the chatbot?", key="help-modal", padding=15, max_width=950)
+
+# Function to display the help modal
+def display_help_modal():
+    open_help_modal = st.button("Help")
+    if open_help_modal:
+        help_modal.open()
+
+    if help_modal.is_open():
+        with help_modal.container():
+            try:
+                help_image = Image.open(help_image_path)  # Load the image from the static path
+                st.image(help_image)  # Display the image inside the modal
+            except FileNotFoundError:
+                st.error("Help image not found. Please ensure 'help.jpg' is in the correct directory.")
+            st.write("Here is how to use this chatbot, click the FAQs at the top")
+
+# Call the function to display the help modal
+display_help_modal()
 
 # Safety Messaging
 safety_message = "X"
@@ -193,15 +211,7 @@ else:
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
-        open_help_modal = st.button("Help", disabled=st.session_state.thinking)
-        if open_help_modal:
-            help_modal.open()
-
-    if help_modal.is_open():
-        with help_modal.container():
-            help_image = Image.open("help.jpg")  # Load the image from the same directory
-            st.image(help_image)  # Display the image inside the modal
-            st.write("Here is how to use this chatbot, click the FAQs at the top")
+        display_help_modal()
 
     if "messages" not in st.session_state or not st.session_state.messages:
         st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
