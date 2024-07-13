@@ -3,7 +3,6 @@ import jwt
 import streamlit as st
 import utils
 from streamlit_modal import Modal
-from PIL import Image
 from botocore.exceptions import ClientError
 
 UTC = timezone.utc
@@ -41,9 +40,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Path to the help image
-help_image_path = "help.jpg"
-
 # Modal setup
 help_modal = Modal("How to use the chatbot?", key="help-modal", padding=15, max_width=950)
 
@@ -55,11 +51,7 @@ def display_help_modal():
 
     if help_modal.is_open():
         with help_modal.container():
-            try:
-                help_image = Image.open(help_image_path)  # Load the image from the static path
-                st.image(help_image)  # Display the image inside the modal
-            except FileNotFoundError:
-                st.error("Help image not found. Please ensure 'help.jpg' is in the correct directory.")
+            st.image("/static/help.jpg")  # Reference the image from the static directory
             st.write("Here is how to use this chatbot, click the FAQs at the top")
 
 # Call the function to display the help modal
