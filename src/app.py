@@ -91,8 +91,6 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "warning_message" not in st.session_state:
     st.session_state.warning_message = False
-if "rerun" not in st.session_state:
-    st.session_state.rerun = False
 if "oauth_init" not in st.session_state:
     st.session_state.oauth_init = False
 
@@ -248,11 +246,6 @@ def set_rerun_flag(question):
     st.session_state.user_prompt = question
     st.session_state.messages.append({"role": "user", "content": question})
     st.session_state.thinking = True
-    st.session_state.rerun = True
-
-if st.session_state.rerun:
-    st.session_state.rerun = False
-    st.rerun()
 
 # Add a horizontal line after the sample questions
 st.markdown("<hr>", unsafe_allow_html=True)
