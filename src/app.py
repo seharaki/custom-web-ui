@@ -4,6 +4,7 @@ import jwt.algorithms
 import streamlit as st
 import utils
 from streamlit_modal import Modal
+from botocore.exceptions import ClientError
 
 UTC = timezone.utc
 
@@ -81,6 +82,18 @@ if "rerun" not in st.session_state:
     st.session_state.rerun = False
 if "oauth_init" not in st.session_state:
     st.session_state.oauth_init = False
+
+# Define a function to clear the chat history
+def clear_chat_history():
+    st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
+    st.session_state.questions = []
+    st.session_state.answers = []
+    st.session_state.input = ""
+    st.session_state["chat_history"] = []
+    st.session_state["conversationId"] = ""
+    st.session_state["parentMessageId"] = ""
+    st.session_state["show_feedback_success"] = False
+    st.session_state["warning_message"] = False
 
 # Debugging: Print initial state
 st.write("Initial state:", st.session_state)
