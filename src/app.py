@@ -51,7 +51,7 @@ def display_help_modal():
 
     if help_modal.is_open():
         with help_modal.container():
-            st.markdown('<img src="./src/static/help.jpg" style="width:100%">', unsafe_allow_html=True)
+            st.markdown('<img src="./static/help.jpg" style="width:100%">', unsafe_allow_html=True)
             st.image("./src/static/help.jpg")  # Reference the image from the static directory
             st.write("Here is how to use this chatbot, click the FAQs at the top")
 
