@@ -35,7 +35,7 @@ safety_message = "X"
 session_toggle = False
 
 # Init configuration
-@st.experimental_singleton
+@st.cache_resource
 def get_config_agent():
     return utils.retrieve_config_from_agent()
 
