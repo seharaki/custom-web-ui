@@ -3,11 +3,7 @@ import jwt
 import jwt.algorithms
 import streamlit as st
 import utils
-import time
-from streamlit_feedback import streamlit_feedback
 from streamlit_modal import Modal
-from PIL import Image, UnidentifiedImageError
-from botocore.exceptions import ClientError
 
 UTC = timezone.utc
 
@@ -29,23 +25,8 @@ hide_streamlit_style = """
         """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-# Styling for thumbs up and thumbs down buttons
-st.markdown("""
-<style>
-.element-container:has(#thumbs-up-span) + div button {
-    font-size: 32px !important;
-    width: 100% !important;  /* Adjust the width as needed */
-    margin-right: 2px !important;  /* Add margin to separate buttons */
-}
-.element-container:has(#thumbs-down-span) + div button {
-    font-size: 32px !important;
-    width: 130% !important;  /* Adjust the width as needed */
-}
-</style>
-""", unsafe_allow_html=True)
-
 # Modal setup
-help_modal = Modal("How to use the chatbot?", key="help-modal", padding=15,max_width=950)
+help_modal = Modal("How to use the chatbot?", key="help-modal", padding=15, max_width=950)
 
 # Safety Messaging
 safety_message = "X"
@@ -54,7 +35,12 @@ safety_message = "X"
 session_toggle = False
 
 # Init configuration
-config_agent = utils.retrieve_config_from_agent()
+@st.experimental_singleton
+def get_config_agent():
+    return utils.retrieve_config_from_agent()
+
+config_agent = get_config_agent()
+
 if "aws_credentials" not in st.session_state:
     st.session_state.aws_credentials = None
 
@@ -91,100 +77,76 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "warning_message" not in st.session_state:
     st.session_state.warning_message = False
+if "rerun" not in st.session_state:
+    st.session_state.rerun = False
 if "oauth_init" not in st.session_state:
     st.session_state.oauth_init = False
 
-# Define a function to clear the chat history
-def clear_chat_history():
-    st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
-    st.session_state.questions = []
-    st.session_state.answers = []
-    st.session_state.input = ""
-    st.session_state["chat_history"] = []
-    st.session_state["conversationId"] = ""
-    st.session_state["parentMessageId"] = ""
-    st.session_state["show_feedback_success"] = False
-    st.session_state["warning_message"] = False
-
-def get_remaining_session_time():
-    if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
-        expires_at = st.session_state["idc_jwt_token"]["expires_at"]
-        remaining_time = expires_at - datetime.now(tz=UTC)
-        return remaining_time
-    return None
-
-def refresh_token_if_needed():
-    if "idc_jwt_token" in st.session_state:
-        remaining_time = get_remaining_session_time()
-        if remaining_time and remaining_time < timedelta(minutes=5):
-            try:
-                token = oauth2.refresh_token(st.session_state.token, force=True)
-                # Store refresh token if available
-                if "refresh_token" in token:
-                    st.session_state.refresh_token = token["refresh_token"]
-                else:
-                    token["refresh_token"] = st.session_state.refresh_token
-                # Retrieve the Identity Center token
-                st.session_state.token = token
-                st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"], config_agent)
-                st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
-            except Exception as e:
-                st.error(f"Error refreshing token: {e}. Refresh the page.")
-                del st.session_state["token"]
-                if "refresh_token" in st.session_state:
-                    del st.session_state["refresh_token"]
-                st.rerun()
-
-def encode_urls_in_references(references):
-    parts = references.split("URL: ")
-    encoded_references = parts[0]
-    for part in parts[1:]:
-        end_pos = part.find("\n")
-        if (end_pos == -1):
-            end_pos = len(part)
-        url = part[:end_pos].strip()
-        if url.endswith(".json"):
-            url = url[:-5]  # Remove '.json' from the end of the URL
-        encoded_url = url.replace(' ', '%20')
-        rest = part[end_pos:]
-        encoded_references += "URL: " + encoded_url + rest
-    return encoded_references
+# Debugging: Print initial state
+st.write("Initial state:", st.session_state)
 
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
-if "token" not in st.session_state:
+
+def display_authorize_button():
     redirect_uri = f"https://{config_agent.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
     result = oauth2.authorize_button("Start Chatting", scope="openid email offline_access", pkce="S256", redirect_uri=redirect_uri)
+    st.write("Authorize button result:", result)
+    return result
+
+if "token" not in st.session_state:
     if not st.session_state.oauth_init:
         st.session_state.oauth_init = True
         st.rerun()
-    st.warning("Outside the if statement")
+    result = display_authorize_button()
     if result and "token" in result:
-        # If authorization successful, save token in session state
         st.session_state.token = result.get("token")
-        # Store refresh token if available
         if "refresh_token" in result["token"]:
             st.session_state.refresh_token = result["token"]["refresh_token"]
         else:
             st.error("No refresh token received.")
-        # Retrieve the Identity Center token
         st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(st.session_state.token["id_token"], config=config_agent)
-        st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + \
-            timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
+        st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
         st.session_state.authenticated = True
         st.rerun()
 else:
     token = st.session_state["token"]
-    refresh_token = token.get("refresh_token")  # saving the long lived refresh_token
+    refresh_token = token.get("refresh_token")
     user_email = jwt.decode(token["id_token"], options={"verify_signature": False})["email"]
     if not refresh_token:
         st.error("No refresh token available. Please log in again.")
         del st.session_state["token"]
         st.rerun()
 
-    # Automatic token refresh
-    refresh_token_if_needed()
-    col1, col2, col3 = st.columns([1, 1, 3])
+    def get_remaining_session_time():
+        if "idc_jwt_token" in st.session_state and "expires_at" in st.session_state["idc_jwt_token"]:
+            expires_at = st.session_state["idc_jwt_token"]["expires_at"]
+            remaining_time = expires_at - datetime.now(tz=UTC)
+            return remaining_time
+        return None
 
+    def refresh_token_if_needed():
+        if "idc_jwt_token" in st.session_state:
+            remaining_time = get_remaining_session_time()
+            if remaining_time and remaining_time < timedelta(minutes=5):
+                try:
+                    token = oauth2.refresh_token(st.session_state.token, force=True)
+                    if "refresh_token" in token:
+                        st.session_state.refresh_token = token["refresh_token"]
+                    else:
+                        token["refresh_token"] = st.session_state.refresh_token
+                    st.session_state.token = token
+                    st.session_state["idc_jwt_token"] = utils.get_iam_oidc_token(token["id_token"], config_agent)
+                    st.session_state["idc_jwt_token"]["expires_at"] = datetime.now(tz=UTC) + timedelta(seconds=st.session_state["idc_jwt_token"]["expiresIn"])
+                except Exception as e:
+                    st.error(f"Error refreshing token: {e}. Refresh the page.")
+                    del st.session_state["token"]
+                    if "refresh_token" in st.session_state:
+                        del st.session_state["refresh_token"]
+                    st.rerun()
+
+    refresh_token_if_needed()
+
+    col1, col2, col3 = st.columns([1, 1, 3])
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
@@ -200,13 +162,11 @@ else:
     if "messages" not in st.session_state or not st.session_state.messages:
         st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
 
-    # Display remaining session time
     remaining_time = get_remaining_session_time()
     if remaining_time:
         if session_toggle:
             st.info(f"Session expires in: {remaining_time}")
 
-    # Define sample questions
     sample_questions = [
         "What A?",
         "How dB?",
@@ -215,7 +175,6 @@ else:
         "What E?"
     ]
 
-    # Display sample question buttons
     st.markdown(
         """
         <style>
@@ -245,21 +204,23 @@ def set_rerun_flag(question):
     st.session_state.user_prompt = question
     st.session_state.messages.append({"role": "user", "content": question})
     st.session_state.thinking = True
+    st.session_state.rerun = True
 
-# Add a horizontal line after the sample questions
+if st.session_state.rerun:
+    st.session_state.rerun = False
+    st.rerun()
+
 st.markdown("<hr>", unsafe_allow_html=True)
 
-# Display the chat messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
 
-# User-provided prompt
-if st.session_state.authenticated:  # Only show chat input if authenticated
+if st.session_state.authenticated:
     if prompt := st.chat_input(key="chat_input"):
         st.session_state.user_prompt = prompt
         st.session_state.messages.append({"role": "user", "content": prompt})
-        st.session_state.thinking = True  # Disable buttons when user sends a message
+        st.session_state.thinking = True
         st.rerun()
 
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
@@ -278,7 +239,6 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             except ClientError as e:
                 if e.response['Error']['Code'] == 'ValidationException':
                     error_message = str(e)
-                    # Retry the request with updated parentMessageId
                     st.session_state["conversationId"] = ""
                     response = utils.get_queue_chain(
                         st.session_state.user_prompt,
@@ -313,13 +273,12 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         st.session_state["show_feedback_success"] = False
         st.session_state.thinking = False
         st.session_state.warning_message = True
-        st.rerun()  # Re-run the script to re-enable buttons
+        st.rerun()
 
 if st.session_state.show_feedback:
     col1, col2, _ = st.columns([1, 1, 10])
     feedback_type = None
 
-    # Ensure the thumbs up and thumbs down buttons do not show for the initial message
     last_message = st.session_state.messages[-1]["content"] if st.session_state.messages else ""
     if last_message != "How may I assist you today?":
         with col1:
@@ -391,6 +350,5 @@ if st.session_state.show_feedback_success:
 if st.session_state.warning_message:
     st.warning(safety_message, icon="🚨")
 
-# Ensure the clear chat button remains visible at the bottom of the response only after authentication
 if "token" in st.session_state:
     st.button("Clear Chat", on_click=clear_chat_history)
