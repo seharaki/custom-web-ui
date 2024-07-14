@@ -1,8 +1,12 @@
 from datetime import datetime, timedelta, timezone
 import jwt
+import jwt.algorithms
 import streamlit as st
 import utils
+import time
+from streamlit_feedback import streamlit_feedback
 from streamlit_modal import Modal
+from PIL import Image, UnidentifiedImageError
 from botocore.exceptions import ClientError
 
 UTC = timezone.utc
@@ -41,21 +45,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Modal setup
-help_modal = Modal("How to use the chatbot?", key="help-modal", padding=15, max_width=950)
-
-# Function to display the help modal
-def display_help_modal():
-    open_help_modal = st.button("Help")
-    if open_help_modal:
-        help_modal.open()
-
-    if help_modal.is_open():
-        with help_modal.container():
-            st.markdown('<img src="./app/static/help.jpg" style="width:100%">', unsafe_allow_html=True)
-            st.write("Here is how to use this chatbot, click the FAQs at the top")
-
-# Call the function to display the help modal
-display_help_modal()
+help_modal = Modal("How to use the chatbot?", key="help-modal", padding=15,max_width=950)
 
 # Safety Messaging
 safety_message = "X"
@@ -203,7 +193,14 @@ else:
     with col1:
         st.write("Logged in with DeviceID: ", user_email)
     with col2:
-        display_help_modal()
+        open_help_modal = st.button("Help", disabled=st.session_state.thinking)
+        if open_help_modal:
+            help_modal.open()
+
+    if help_modal.is_open():
+        with help_modal.container():
+            st.markdown('<img src="./app/static/help.jpg" style="width:100%">', unsafe_allow_html=True)
+            st.write("Here is how to use this chatbot, click the FAQs at the top")
 
     if "messages" not in st.session_state or not st.session_state.messages:
         st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
