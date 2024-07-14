@@ -51,10 +51,7 @@ def display_help_modal():
 
     if help_modal.is_open():
         with help_modal.container():
-            st.markdown('<img src="/static/help.jpg" style="width:100%">', unsafe_allow_html=True)
-            st.markdown('<img src="./static/help.jpg" style="width:100%">', unsafe_allow_html=True)
             st.markdown('<img src="./app/static/help.jpg" style="width:100%">', unsafe_allow_html=True)
-            st.markdown('<img src="static/help.jpg" style="width:100%">', unsafe_allow_html=True)
             st.write("Here is how to use this chatbot, click the FAQs at the top")
 
 # Call the function to display the help modal
