@@ -153,12 +153,10 @@ def encode_urls_in_references(references):
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
     redirect_uri = f"https://{config_agent.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
-    st.warning(st.session_state["oauth_init"])
     result = oauth2.authorize_button("Start Chatting", scope="openid email offline_access", pkce="S256", redirect_uri=redirect_uri)
     if not st.session_state.oauth_init:
         st.session_state.oauth_init = True
         st.rerun()
-        st.warning("rerun complete")
     st.warning("Outside the if statement")
     if result and "token" in result:
         # If authorization successful, save token in session state
