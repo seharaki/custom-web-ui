@@ -142,7 +142,7 @@ def encode_urls_in_references(references):
     encoded_references = parts[0]
     for part in parts[1:]:
         end_pos = part.find("\n")
-        if end_pos == -1:
+        if (end_pos == -1):
             end_pos = len(part)
         url = part[:end_pos].strip()
         if url.endswith(".json"):
@@ -157,11 +157,9 @@ if "token" not in st.session_state:
     redirect_uri = f"https://{config_agent.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
     st.warning(st.session_state["oauth_init"])
     result = oauth2.authorize_button("Start Chatting", scope="openid email offline_access", pkce="S256", redirect_uri=redirect_uri)
-    if st.session_state["oauth_init"] == False:
-        #st.rerun()
-        st.warning(st.session_state["oauth_init"])
+    if not st.session_state.oauth_init:
         st.session_state.oauth_init = True
-        st.warning(st.session_state["oauth_init"])
+        st.rerun()
     st.warning("Outside the if statement")
     if result and "token" in result:
         # If authorization successful, save token in session state
