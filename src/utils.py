@@ -1,11 +1,16 @@
+import datetime
 import logging
 import os
-from datetime import datetime, timezone
+import time
+from decimal import Decimal
+
 import boto3
 import jwt
+import streamlit as st
 import urllib3
 from streamlit_oauth import OAuth2Component
 from collections import namedtuple
+from datetime import datetime, timezone
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -28,6 +33,7 @@ UTC = timezone.utc
 APPCONFIG_APP_NAME = os.environ["APPCONFIG_APP_NAME"]
 APPCONFIG_ENV_NAME = os.environ["APPCONFIG_ENV_NAME"]
 APPCONFIG_CONF_NAME = os.environ["APPCONFIG_CONF_NAME"]
+AMAZON_Q_APP_ID = None
 IAM_ROLE = None
 REGION = "us-east-1"
 IDC_APPLICATION_ID = None
@@ -56,7 +62,7 @@ def configure_oauth_component(OAUTH_CONFIG: dict):
     """
     idp_config = urllib3.request(
         "GET",
-        f"{OAUTH_CONFIG['Domain']}/.well-known/openid-configuration"
+            f"{OAUTH_CONFIG['Domain']}/.well-known/openid-configuration"
     ).json()
 
     authorize_url = idp_config["authorization_endpoint"]
@@ -127,21 +133,26 @@ def get_queue_chain(
     This method is used to get the answer from the queue chain.
     """
     amazon_q = get_qclient(token, config)
+    st.warning(f"Calling Converstaion")
     start_time = time.time()
-
+    st.warning(f"After time")
     if conversation_id != "":
+        st.warning(f"with Converstaion and region {config.REGION}")
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID,
             userMessage=prompt_input,
             conversationId=conversation_id,
             parentMessageId=parent_message_id,
         )
+        st.warning(f"with Converstaion and region AFter {config.REGION}")
     else:
+        st.warning(f"without Converstaion and region {config.REGION}")
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input)
 
     end_time = time.time()
     duration = end_time - start_time
+    st.warning(duration)
 
     system_message = answer.get("systemMessage", "")
     conversation_id = answer.get("conversationId", "")
@@ -235,20 +246,3 @@ def store_message_response(user_email, conversation_id, parent_message_id, user_
         logger.info("Message and response stored successfully")
     except Exception as e:
         logger.error(f"Error storing message and response: {e}")
-
-def detect_language(text):
-    comprehend = boto3.client('comprehend')
-    response = comprehend.detect_dominant_language(Text=text)
-    languages = response['Languages']
-    if languages:
-        return languages[0]['LanguageCode']
-    return 'en'  # Default to English if language detection fails
-
-def translate_text(text, source_lang, target_lang):
-    translate = boto3.client('translate')
-    response = translate.translate_text(
-        Text=text,
-        SourceLanguageCode=source_lang,
-        TargetLanguageCode=target_lang
-    )
-    return response['TranslatedText']
