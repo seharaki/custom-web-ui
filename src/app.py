@@ -12,8 +12,8 @@ from botocore.exceptions import ClientError
 UTC = timezone.utc
 
 # Title
-title = "x"
-help_message = "X"
+title = "Virtual Chatbot"
+help_message = "This is a sample help message."
 
 # Page Styling Configuration
 st.set_page_config(page_title=title, layout="wide")
