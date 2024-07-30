@@ -48,7 +48,7 @@ st.markdown("""
 help_modal = Modal("How to use the chatbot?", key="help-modal", padding=15,max_width=950)
 
 # Safety Messaging
-safety_message = "X"
+safety_message = "This is a sample message"
 
 # Show Session Time
 session_toggle = False
@@ -155,14 +155,10 @@ def encode_urls_in_references(references):
 oauth2 = utils.configure_oauth_component(config_agent.OAUTH_CONFIG)
 if "token" not in st.session_state:
     redirect_uri = f"https://{config_agent.OAUTH_CONFIG['ExternalDns']}/component/streamlit_oauth.authorize_button/index.html"
-    st.warning(st.session_state["oauth_init"])
     result = oauth2.authorize_button("Start Chatting", scope="openid email offline_access", pkce="S256", redirect_uri=redirect_uri)
     if st.session_state["oauth_init"] == False:
         #st.rerun()
-        st.warning(st.session_state["oauth_init"])
         st.session_state.oauth_init = True
-        st.warning(st.session_state["oauth_init"])
-    st.warning("Outside the if statement")
     if result and "token" in result:
         # If authorization successful, save token in session state
         st.session_state.token = result.get("token")
@@ -213,11 +209,11 @@ else:
 
     # Define sample questions
     sample_questions = [
-        "What A?",
-        "How dB?",
-        "What C",
-        "What D?",
-        "What E?"
+        "What can I cook with Shrimp?",
+        "What can I cook with Chicken?",
+        "What Salads can I make?",
+        "Any good ideas for dessert?",
+        "What are some savory foods I can make?"
     ]
 
     # Display sample question buttons
