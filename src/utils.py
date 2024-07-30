@@ -133,26 +133,20 @@ def get_queue_chain(
     This method is used to get the answer from the queue chain.
     """
     amazon_q = get_qclient(token, config)
-    st.warning(f"Calling Converstaion")
     start_time = time.time()
-    st.warning(f"After time")
     if conversation_id != "":
-        st.warning(f"with Converstaion and region {config.REGION}")
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID,
             userMessage=prompt_input,
             conversationId=conversation_id,
             parentMessageId=parent_message_id,
         )
-        st.warning(f"with Converstaion and region AFter {config.REGION}")
     else:
-        st.warning(f"without Converstaion and region {config.REGION}")
         answer = amazon_q.chat_sync(
             applicationId=config.AMAZON_Q_APP_ID, userMessage=prompt_input)
 
     end_time = time.time()
     duration = end_time - start_time
-    st.warning(duration)
 
     system_message = answer.get("systemMessage", "")
     conversation_id = answer.get("conversationId", "")
