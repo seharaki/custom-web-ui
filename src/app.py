@@ -209,7 +209,7 @@ else:
 
     # Define sample questions
     sample_questions = [
-        "What can I cook with Shrimp?",
+        "Was kann ich mit Hühnchen kochen?",
         "What can I cook with Chicken?",
         "What Salads can I make?",
         "Any good ideas for dessert?",
@@ -312,8 +312,8 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                     raise e
 
             if "references" in response:
-                full_response = f"""{translated_response}\n\n---\n{utils.encode_urls_in_references(response["references"])}"""
-                st.session_state.resources = utils.encode_urls_in_references(response["references"])
+                full_response = f"""{translated_response}\n\n---\n{encode_urls_in_references(response["references"])}"""
+                st.session_state.resources = encode_urls_in_references(response["references"])
             else:
                 full_response = f"""{translated_response}\n\n---\nNo sources"""
             placeholder.markdown(full_response)
