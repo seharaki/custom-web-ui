@@ -45,7 +45,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Modal setup
-help_modal = Modal("How to use the chatbot?", key="help-modal", padding=15,max_width=950)
+help_modal = Modal("How to use the chatbot?", key="help-modal", padding=15, max_width=950)
 
 # Safety Messaging
 safety_message = "This is a sample message"
@@ -274,20 +274,35 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         with st.spinner("Thinking..."):
             placeholder = st.empty()
             try:
+                # Translate message to English if needed
+                user_message = st.session_state.user_prompt
+                translated_message, detected_language = utils.translate_text(user_message, 'en', config_agent.REGION)
+                st.warning(f"Original message: {user_message} detected language: {detected_language}")
+
                 response = utils.get_queue_chain(
-                    st.session_state.user_prompt,
+                    translated_message,
                     st.session_state["conversationId"],
                     st.session_state["parentMessageId"],
                     st.session_state["idc_jwt_token"]["idToken"],
                     config_agent
                 )
+
+                # Translate response back to the user's language if needed
+                if detected_language != 'en':
+                    translated_response = utils.translate_text(response["answer"], detected_language, config_agent.REGION)
+                else:
+                    translated_response = response["answer"]
+                
+                st.warning(f"Translated message: {translated_message}")
+                st.warning(f"Response: {translated_response}")
+
             except ClientError as e:
                 if e.response['Error']['Code'] == 'ValidationException':
                     error_message = str(e)
                     # Retry the request with updated parentMessageId
                     st.session_state["conversationId"] = ""
                     response = utils.get_queue_chain(
-                        st.session_state.user_prompt,
+                        translated_message,
                         st.session_state["conversationId"],
                         st.session_state["parentMessageId"],
                         st.session_state["idc_jwt_token"]["idToken"],
@@ -297,14 +312,14 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                     raise e
 
             if "references" in response:
-                full_response = f"""{response["answer"]}\n\n---\n{encode_urls_in_references(response["references"])}"""
-                st.session_state.resources = encode_urls_in_references(response["references"])
+                full_response = f"""{translated_response}\n\n---\n{utils.encode_urls_in_references(response["references"])}"""
+                st.session_state.resources = utils.encode_urls_in_references(response["references"])
             else:
-                full_response = f"""{response["answer"]}\n\n---\nNo sources"""
+                full_response = f"""{translated_response}\n\n---\nNo sources"""
             placeholder.markdown(full_response)
             st.session_state["conversationId"] = response["conversationId"]
             st.session_state["parentMessageId"] = response["parentMessageId"]
-            st.session_state.response = response["answer"]
+            st.session_state.response = translated_response
 
         st.session_state.messages.append({"role": "assistant", "content": full_response})
         utils.store_message_response(

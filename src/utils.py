@@ -240,3 +240,12 @@ def store_message_response(user_email, conversation_id, parent_message_id, user_
         logger.info("Message and response stored successfully")
     except Exception as e:
         logger.error(f"Error storing message and response: {e}")
+
+def translate_text(text, target_language, region):
+    client = boto3.client('translate', region_name=region)
+    response = client.translate_text(
+        Text=text,
+        SourceLanguageCode='auto',  # Automatically detect the source language
+        TargetLanguageCode=target_language
+    )
+    return response['TranslatedText'], response['SourceLanguageCode']
