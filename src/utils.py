@@ -248,5 +248,6 @@ def translate_text(text, target_language, region):
         SourceLanguageCode='auto',  # Automatically detect the source language
         TargetLanguageCode=target_language
     )
-    return response['TranslatedText']
+    return response['TranslatedText'], response['SourceLanguageCode']
+
 

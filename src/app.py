@@ -276,8 +276,8 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             try:
                 # Translate message to English if needed
                 user_message = st.session_state.user_prompt
-                translated_message = utils.translate_text(user_message, 'en', config_agent.REGION)
-                st.warning(f"Original message: {user_message}")
+                translated_message, detected_language = utils.translate_text(user_message, 'en', config_agent.REGION)
+                st.warning(f"Original message: {user_message} detected language: {detected_language}")
 
                 response = utils.get_queue_chain(
                     translated_message,
@@ -288,7 +288,11 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                 )
 
                 # Translate response back to the user's language if needed
-                translated_response = utils.translate_text(response["answer"], 'auto', config_agent.REGION)
+                if detected_language != 'en':
+                    translated_response, _ = utils.translate_text(response["answer"], detected_language, config_agent.REGION)
+                else:
+                    translated_response = response["answer"]
+                st.warning(f"Translated message: {translated_message}")
                 st.warning(f"Response: {translated_response}")
 
             except ClientError as e:
