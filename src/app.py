@@ -209,11 +209,11 @@ else:
 
     # Define sample questions
     sample_questions = [
-        "What can I cook with Shrimp?",
-        "What can I cook with Chicken?",
-        "What Salads can I make?",
-        "Any good ideas for dessert?",
-        "What are some savory foods I can make?"
+        "What can I cook with chicken?",
+        "Que puis-je cuisiner avec du poulet?",
+        "Was kann ich mit Hühnchen kochen?",
+        "मैं चिकन के साथ क्या पका सकता हूँ?",
+        "ماذا يمكنني أن أطبخ بالدجاج؟"
     ]
 
     # Display sample question buttons
@@ -288,7 +288,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                 )
 
                 # Translate response back to the user's language if needed
-                translated_response = utils.translate_text(response["answer"], user_message, config_agent.REGION)
+                translated_response = utils.translate_text(response["answer"], 'auto', config_agent.REGION)
                 st.warning(f"Response: {translated_response}")
 
             except ClientError as e:
@@ -307,8 +307,8 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                     raise e
 
             if "references" in response:
-                full_response = f"""{translated_response}\n\n---\n{utils.encode_urls_in_references(response["references"])}"""
-                st.session_state.resources = utils.encode_urls_in_references(response["references"])
+                full_response = f"""{translated_response}\n\n---\n{encode_urls_in_references(response["references"])}"""
+                st.session_state.resources = encode_urls_in_references(response["references"])
             else:
                 full_response = f"""{translated_response}\n\n---\nNo sources"""
             placeholder.markdown(full_response)
