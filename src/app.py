@@ -209,7 +209,7 @@ else:
 
     # Define sample questions
     sample_questions = [
-        "Was kann ich mit Hühnchen kochen?",
+        "What can I cook with Shrimp?",
         "What can I cook with Chicken?",
         "What Salads can I make?",
         "Any good ideas for dessert?",
@@ -276,8 +276,8 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             try:
                 # Translate message to English if needed
                 user_message = st.session_state.user_prompt
-                translated_message, detected_language = utils.translate_text(user_message, 'en', config_agent.REGION)
-                st.warning(f"Original message: {user_message} detected language: {detected_language}")
+                translated_message = utils.translate_text(user_message, 'en', config_agent.REGION)
+                st.warning(f"Original message: {user_message}")
 
                 response = utils.get_queue_chain(
                     translated_message,
@@ -288,12 +288,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                 )
 
                 # Translate response back to the user's language if needed
-                if detected_language != 'en':
-                    translated_response = utils.translate_text(response["answer"], detected_language, config_agent.REGION)
-                else:
-                    translated_response = response["answer"]
-                
-                st.warning(f"Translated message: {translated_message}")
+                translated_response = utils.translate_text(response["answer"], user_message, config_agent.REGION)
                 st.warning(f"Response: {translated_response}")
 
             except ClientError as e:
@@ -312,8 +307,8 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                     raise e
 
             if "references" in response:
-                full_response = f"""{translated_response}\n\n---\n{encode_urls_in_references(response["references"])}"""
-                st.session_state.resources = encode_urls_in_references(response["references"])
+                full_response = f"""{translated_response}\n\n---\n{utils.encode_urls_in_references(response["references"])}"""
+                st.session_state.resources = utils.encode_urls_in_references(response["references"])
             else:
                 full_response = f"""{translated_response}\n\n---\nNo sources"""
             placeholder.markdown(full_response)
