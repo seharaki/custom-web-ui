@@ -235,19 +235,24 @@ def get_bedrock_client():
 
 def list_available_bedrock_models():
     """
-    List available models in AWS Bedrock.
+    List available models in AWS Bedrock using the correct method from the documentation.
     """
     st.warning("Attempting to list available Bedrock models.")
-    bedrock_client = get_bedrock_client(service="bedrock")
+    bedrock_client = get_bedrock_client()  # Ensure we are using the correct client for Bedrock
     if not bedrock_client:
         st.warning("Failed to create Bedrock client.")
         return []
 
     try:
-        response = bedrock_client.list_foundation_models()  # This is available in the `bedrock` client
+        # Fetch the list of foundation models using Bedrock client
+        response = bedrock_client.list_foundation_models()
         models = response.get("models", [])
-        st.warning(f"Models retrieved: {models}")
-        return models
+        if models:
+            st.warning(f"Models retrieved: {models}")
+            return models
+        else:
+            st.warning("No models available.")
+            return []
     except Exception as e:
         st.warning(f"Error listing Bedrock models: {e}")
         return []
