@@ -90,24 +90,12 @@ else:
         with st.chat_message("user"):
             st.write(prompt)
 
-        # List available Bedrock models
-        available_models = utils.list_available_bedrock_models()
-        st.warning("Available Bedrock Models:")
-        for model in available_models:
-            st.warning(f"Model ID: {model['modelId']}, Provider: {model['providerName']}, Model Name: {model['modelName']}")
-
         # Generate a response from Amazon Q and AWS Bedrock
         if st.session_state.messages[-1]["role"] != "assistant":
             with st.chat_message("assistant"):
                 with st.spinner("Thinking..."):
                     placeholder = st.empty()
                     
-                    # List available Bedrock models
-                    available_models = utils.list_available_bedrock_models()
-                    st.warning("Available Bedrock Models:")
-                    for model in available_models:
-                        st.warning(f"Model ID: {model['modelId']}, Provider: {model['providerName']}, Model Name: {model['modelName']}")
-
                     # Get response from Amazon Q
                     q_response = utils.get_queue_chain(prompt, st.session_state["conversationId"], st.session_state["parentMessageId"], st.session_state["idc_jwt_token"]["idToken"])
                     
