@@ -260,7 +260,7 @@ def get_bedrock_response(prompt):
 
     try:
         response = bedrock_client.invoke_model(
-            modelId="valid-model-id-from-list",  # Replace with the correct model ID from the list
+            modelId="anthropic.claude-v2",
             body=json.dumps({"prompt": prompt}),
             contentType="application/json"
         )
