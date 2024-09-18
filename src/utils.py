@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import json  # Import JSON module
 import boto3
 import jwt
 import streamlit as st
@@ -169,23 +170,27 @@ def get_bedrock_client():
         aws_secret_access_key=st.session_state.aws_credentials["SecretAccessKey"],
         aws_session_token=st.session_state.aws_credentials["SessionToken"],
     )
-    return session.client("bedrock", region_name=REGION)
+    return session.client("bedrock-runtime", region_name=REGION)
 
 
 def get_bedrock_response(prompt):
     """
-    Send the prompt to Bedrock (Claude LLM) and return the response.
+    Send the prompt to AWS Bedrock (Claude LLM) and return the response.
     """
     bedrock_client = get_bedrock_client()
+    
+    # Bedrock uses the model ID and content
     response = bedrock_client.invoke_model(
-        modelId="claude-v2",
-        body={"prompt": prompt},
+        modelId="claude-v2",  # Replace with your actual model ID
+        body=json.dumps({"prompt": prompt}),  # Payload with prompt
         contentType="application/json"
     )
     
-    # Parse response
-    result = response["body"]
+    # Parse the response body
+    response_body = response['body'].read().decode('utf-8')
+    result = json.loads(response_body)
+
     return {
-        "answer": result.get("text", ""),
+        "answer": result.get("outputText", ""),
         "references": "No sources available"  # Replace with appropriate source extraction if available
     }
