@@ -4,15 +4,16 @@ import streamlit as st
 import utils
 from streamlit_feedback import streamlit_feedback
 
+# Ensure page config is the first Streamlit command
+st.set_page_config(page_title="Amazon Q Business Custom UI")
+st.title("Amazon Q Business Custom UI")
+
 UTC = timezone.utc
 
 # Init configuration
 utils.retrieve_config_from_agent()
 if "aws_credentials" not in st.session_state:
     st.session_state.aws_credentials = None
-
-st.set_page_config(page_title="Amazon Q Business Custom UI")
-st.title("Amazon Q Business Custom UI")
 
 # Define a function to clear the chat history
 def clear_chat_history():
@@ -79,6 +80,10 @@ else:
     if "input" not in st.session_state:
         st.session_state.input = ""
 
+    # Check if AWS credentials are available, if not, assume the role again
+    if not st.session_state.aws_credentials:
+        utils.assume_role_with_token(st.session_state["idc_jwt_token"]["idToken"])
+
     # Display chat messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -89,6 +94,15 @@ else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.write(prompt)
+
+        # List available Bedrock models
+        available_models = utils.list_available_bedrock_models()
+        if available_models:
+            st.warning("Available Bedrock Models:")
+            for model in available_models:
+                st.warning(f"Model ID: {model['modelId']}, Provider: {model['providerName']}, Model Name: {model['modelName']}")
+        else:
+            st.warning("No Bedrock models are available.")
 
         # Generate a response from Amazon Q and AWS Bedrock
         if st.session_state.messages[-1]["role"] != "assistant":
