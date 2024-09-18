@@ -152,77 +152,11 @@ def get_qclient(idc_id_token):
         return None
 
 
-def get_queue_chain(prompt_input, conversation_id, parent_message_id, token):
+def get_bedrock_client(service="bedrock-runtime"):
     """
-    Invoke the Amazon Q chat_sync API and format the response for the UI.
+    Create a Bedrock or Bedrock Runtime client to use AWS Bedrock services.
     """
-    st.warning("Attempting to invoke Amazon Q chat_sync API.")
-    try:
-        # List available Bedrock models
-        available_models = list_available_bedrock_models()
-        st.warning("Available Bedrock Models:")
-        for model in available_models:
-            st.warning(f"Model ID: {model['modelId']}, Provider: {model['providerName']}, Model Name: {model['modelName']}")
-
-        amazon_q = get_qclient(token)
-        if not amazon_q:
-            st.warning("Failed to create Amazon Q client.")
-            return None
-
-        if conversation_id:
-            answer = amazon_q.chat_sync(
-                applicationId=AMAZON_Q_APP_ID,
-                userMessage=prompt_input,
-                conversationId=conversation_id,
-                parentMessageId=parent_message_id,
-            )
-        else:
-            answer = amazon_q.chat_sync(
-                applicationId=AMAZON_Q_APP_ID, userMessage=prompt_input
-            )
-
-        system_message = answer.get("systemMessage", "")
-        conversation_id = answer.get("conversationId", "")
-        parent_message_id = answer.get("systemMessageId", "")
-        result = {
-            "answer": system_message,
-            "conversationId": conversation_id,
-            "parentMessageId": parent_message_id,
-        }
-
-        if "sourceAttributions" in answer:
-            attributions = answer["sourceAttributions"]
-            valid_attributions = []
-
-            for attr in attributions:
-                title = attr.get("title", "")
-                url = attr.get("url", "")
-                citation_number = attr.get("citationNumber", "")
-                attribution_text = []
-                if citation_number:
-                    attribution_text.append(f"[{citation_number}]")
-                if title:
-                    attribution_text.append(f"Title: {title}")
-                if url:
-                    attribution_text.append(f", URL: {url}")
-
-                valid_attributions.append("".join(attribution_text))
-
-            result["references"] = "\n\n".join(valid_attributions)
-
-        st.warning(f"Amazon Q chat_sync API invoked successfully. Response: {result}")
-        return result
-
-    except Exception as e:
-        st.warning(f"Error invoking Amazon Q chat_sync API: {e}")
-        return None
-
-
-def get_bedrock_client():
-    """
-    Create a Bedrock client to use AWS Bedrock services.
-    """
-    st.warning("Attempting to create Bedrock client.")
+    st.warning(f"Attempting to create {service} client.")
     if not st.session_state.aws_credentials:
         st.warning("AWS credentials not found. Assuming role again.")
         assume_role_with_token(st.session_state["idc_jwt_token"]["idToken"])
@@ -234,13 +168,13 @@ def get_bedrock_client():
                 aws_secret_access_key=st.session_state.aws_credentials["SecretAccessKey"],
                 aws_session_token=st.session_state.aws_credentials["SessionToken"],
             )
-            st.warning("Bedrock client created successfully.")
-            return session.client("bedrock-runtime", region_name=REGION)
+            st.warning(f"{service} client created successfully.")
+            return session.client(service, region_name=REGION)
         except Exception as e:
-            st.warning(f"Error creating Bedrock client: {e}")
+            st.warning(f"Error creating {service} client: {e}")
             return None
     else:
-        st.warning("Failed to obtain valid AWS credentials for Bedrock.")
+        st.warning(f"Failed to obtain valid AWS credentials for {service}.")
         return None
 
 
@@ -249,13 +183,13 @@ def list_available_bedrock_models():
     List available models in AWS Bedrock.
     """
     st.warning("Attempting to list available Bedrock models.")
-    bedrock_client = get_bedrock_client()
+    bedrock_client = get_bedrock_client(service="bedrock")  # Use the `bedrock` client for listing models
     if not bedrock_client:
         st.warning("Failed to create Bedrock client.")
         return []
 
     try:
-        response = bedrock_client.list_foundation_models()
+        response = bedrock_client.list_foundation_models()  # This API is available in the `bedrock` client
         models = response.get("models", [])
         st.warning(f"Models retrieved: {models}")
         return models
@@ -269,7 +203,7 @@ def get_bedrock_response(prompt):
     Send the prompt to AWS Bedrock (Claude LLM) and return the response.
     """
     st.warning("Attempting to send prompt to Bedrock.")
-    bedrock_client = get_bedrock_client()
+    bedrock_client = get_bedrock_client(service="bedrock-runtime")  # Use `bedrock-runtime` for invoking models
     if not bedrock_client:
         st.warning("Failed to create Bedrock client.")
         return {"answer": "Error: Bedrock client not available", "references": ""}
@@ -292,4 +226,3 @@ def get_bedrock_response(prompt):
     except Exception as e:
         st.warning(f"Error invoking Bedrock model: {e}")
         return {"answer": "Error: Failed to invoke Bedrock model", "references": ""}
-
