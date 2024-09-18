@@ -90,39 +90,45 @@ else:
         with st.chat_message("user"):
             st.write(prompt)
 
-    # Generate a response from Amazon Q and AWS Bedrock
-    if st.session_state.messages[-1]["role"] != "assistant":
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                placeholder = st.empty()
-                
-                # Get response from Amazon Q
-                q_response = utils.get_queue_chain(prompt, st.session_state["conversationId"], st.session_state["parentMessageId"], st.session_state["idc_jwt_token"]["idToken"])
-                
-                # Get response from AWS Bedrock (Claude LLM)
-                bedrock_response = utils.get_bedrock_response(prompt)
-                
-                # Prepare responses from both systems
-                q_full_response = f"**Amazon Q Response:**\n{q_response['answer']}\n\n---\n{q_response.get('references', 'No sources')}"
-                bedrock_full_response = f"**Claude LLM Response (Bedrock):**\n{bedrock_response['answer']}\n\n---\n{bedrock_response.get('references', 'No sources')}"
-                
-                # Display responses
-                st.warning("Response from Amazon Q")
-                placeholder.markdown(q_full_response)
+        # List available Bedrock models
+        available_models = utils.list_available_bedrock_models()
+        st.warning("Available Bedrock Models:")
+        for model in available_models:
+            st.warning(f"Model ID: {model['modelId']}, Provider: {model['providerName']}, Model Name: {model['modelName']}")
 
-                st.warning("Response from Bedrock (Claude LLM)")
-                st.markdown(bedrock_full_response)
+        # Generate a response from Amazon Q and AWS Bedrock
+        if st.session_state.messages[-1]["role"] != "assistant":
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    placeholder = st.empty()
+                    
+                    # Get response from Amazon Q
+                    q_response = utils.get_queue_chain(prompt, st.session_state["conversationId"], st.session_state["parentMessageId"], st.session_state["idc_jwt_token"]["idToken"])
+                    
+                    # Get response from AWS Bedrock (Claude LLM)
+                    bedrock_response = utils.get_bedrock_response(prompt)
+                    
+                    # Prepare responses from both systems
+                    q_full_response = f"**Amazon Q Response:**\n{q_response['answer']}\n\n---\n{q_response.get('references', 'No sources')}"
+                    bedrock_full_response = f"**Claude LLM Response (Bedrock):**\n{bedrock_response['answer']}\n\n---\n{bedrock_response.get('references', 'No sources')}"
+                    
+                    # Display responses
+                    st.warning("Response from Amazon Q")
+                    placeholder.markdown(q_full_response)
 
-                # Save conversation state
-                st.session_state["conversationId"] = q_response["conversationId"]
-                st.session_state["parentMessageId"] = q_response["parentMessageId"]
+                    st.warning("Response from Bedrock (Claude LLM)")
+                    st.markdown(bedrock_full_response)
 
-        # Store messages for future display
-        st.session_state.messages.append({"role": "assistant", "content": q_full_response})
-        st.session_state.messages.append({"role": "assistant", "content": bedrock_full_response})
+                    # Save conversation state
+                    st.session_state["conversationId"] = q_response["conversationId"]
+                    st.session_state["parentMessageId"] = q_response["parentMessageId"]
 
-        # Provide feedback options
-        feedback = streamlit_feedback(
-            feedback_type="thumbs",
-            optional_text_label="[Optional] Please provide an explanation",
-        )
+            # Store messages for future display
+            st.session_state.messages.append({"role": "assistant", "content": q_full_response})
+            st.session_state.messages.append({"role": "assistant", "content": bedrock_full_response})
+
+            # Provide feedback options
+            feedback = streamlit_feedback(
+                feedback_type="thumbs",
+                optional_text_label="[Optional] Please provide an explanation",
+            )

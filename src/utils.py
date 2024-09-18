@@ -173,6 +173,17 @@ def get_bedrock_client():
     return session.client("bedrock-runtime", region_name=REGION)
 
 
+def list_available_bedrock_models():
+    """
+    List available models in AWS Bedrock.
+    """
+    bedrock_client = get_bedrock_client()
+    response = bedrock_client.list_foundation_models()
+    
+    models = response.get("models", [])
+    return models
+
+
 def get_bedrock_response(prompt):
     """
     Send the prompt to AWS Bedrock (Claude LLM) and return the response.
