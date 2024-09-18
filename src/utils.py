@@ -158,6 +158,11 @@ def get_queue_chain(prompt_input, conversation_id, parent_message_id, token):
     Invoke the Amazon Q chat_sync API and format the response for the UI.
     """
     st.warning("Attempting to invoke Amazon Q chat_sync API.")
+    # List available Bedrock models
+    available_models = list_available_bedrock_models()
+    st.warning("Available Bedrock Models:")
+    for model in available_models:
+        st.warning(f"Model ID: {model['modelId']}, Provider: {model['providerName']}, Model Name: {model['modelName']}")
     try:
         amazon_q = get_qclient(token)
         if not amazon_q:
