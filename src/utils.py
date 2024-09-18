@@ -102,7 +102,6 @@ def get_iam_oidc_token(id_token):
 def assume_role_with_token(iam_token):
     """
     Assume IAM role using the IAM OIDC idToken.
-    This is only required for the Q Business call.
     """
     st.warning("Attempting to assume role with IAM token.")
     try:
@@ -127,9 +126,9 @@ def assume_role_with_token(iam_token):
 
 def get_qclient(idc_id_token):
     """
-    Create the Amazon Q client using IAM identity-aware AWS Session (using assumed role).
+    Create the Amazon Q client using IAM identity-aware AWS Session.
     """
-    st.warning("Attempting to create Amazon Q client (with assumed role).")
+    st.warning("Attempting to create Amazon Q client.")
     if not st.session_state.aws_credentials:
         st.warning("AWS credentials not found. Attempting to assume role.")
         assume_role_with_token(idc_id_token)
@@ -159,6 +158,12 @@ def get_queue_chain(prompt_input, conversation_id, parent_message_id, token):
     """
     st.warning("Attempting to invoke Amazon Q chat_sync API.")
     try:
+        # List available Bedrock models
+        available_models = list_available_bedrock_models()
+        st.warning("Available Bedrock Models:")
+        for model in available_models:
+            st.warning(f"Model ID: {model['modelId']}, Provider: {model['providerName']}, Model Name: {model['modelName']}")
+
         amazon_q = get_qclient(token)
         if not amazon_q:
             st.warning("Failed to create Amazon Q client.")
@@ -213,18 +218,29 @@ def get_queue_chain(prompt_input, conversation_id, parent_message_id, token):
         return None
 
 
-def get_bedrock_client():
+def get_bedrock_client(service="bedrock-runtime"):
     """
-    Create a Bedrock client to use AWS Bedrock services (no role assumption required).
+    Create a Bedrock or Bedrock Runtime client to use AWS Bedrock services.
     """
-    st.warning("Attempting to create Bedrock client.")
-    try:
-        # No need to assume role; use default credentials
-        session = boto3.Session()
-        st.warning("Bedrock client created successfully.")
-        return session.client("bedrock-runtime", region_name=REGION)
-    except Exception as e:
-        st.warning(f"Error creating Bedrock client: {e}")
+    st.warning(f"Attempting to create {service} client.")
+    if not st.session_state.aws_credentials:
+        st.warning("AWS credentials not found. Assuming role again.")
+        assume_role_with_token(st.session_state["idc_jwt_token"]["idToken"])
+
+    if st.session_state.aws_credentials:
+        try:
+            session = boto3.Session(
+                aws_access_key_id=st.session_state.aws_credentials["AccessKeyId"],
+                aws_secret_access_key=st.session_state.aws_credentials["SecretAccessKey"],
+                aws_session_token=st.session_state.aws_credentials["SessionToken"],
+            )
+            st.warning(f"{service} client created successfully.")
+            return session.client(service, region_name=REGION)
+        except Exception as e:
+            st.warning(f"Error creating {service} client: {e}")
+            return None
+    else:
+        st.warning(f"Failed to obtain valid AWS credentials for {service}.")
         return None
 
 
@@ -233,13 +249,13 @@ def list_available_bedrock_models():
     List available models in AWS Bedrock.
     """
     st.warning("Attempting to list available Bedrock models.")
-    bedrock_client = get_bedrock_client()
+    bedrock_client = get_bedrock_client(service="bedrock")  # Use the `bedrock` client for listing models
     if not bedrock_client:
         st.warning("Failed to create Bedrock client.")
         return []
 
     try:
-        response = bedrock_client.list_foundation_models()
+        response = bedrock_client.list_foundation_models()  # This API is available in the `bedrock` client
         models = response.get("models", [])
         st.warning(f"Models retrieved: {models}")
         return models
@@ -250,17 +266,17 @@ def list_available_bedrock_models():
 
 def get_bedrock_response(prompt):
     """
-    Send the prompt to AWS Bedrock (Claude LLM) and return the response (no role assumption required).
+    Send the prompt to AWS Bedrock (Claude LLM) and return the response.
     """
     st.warning("Attempting to send prompt to Bedrock.")
-    bedrock_client = get_bedrock_client()
+    bedrock_client = get_bedrock_client(service="bedrock-runtime")  # Use `bedrock-runtime` for invoking models
     if not bedrock_client:
         st.warning("Failed to create Bedrock client.")
         return {"answer": "Error: Bedrock client not available", "references": ""}
 
     try:
         response = bedrock_client.invoke_model(
-            modelId="anthropic.claude-v2",
+            modelId="anthropic.claude-v2",  # Replace with your actual model ID
             body=json.dumps({"prompt": prompt}),
             contentType="application/json"
         )
