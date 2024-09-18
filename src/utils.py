@@ -227,7 +227,7 @@ def get_bedrock_client():
         # No need to assume role; use default credentials
         session = boto3.Session()
         st.warning("Bedrock client created successfully.")
-        return session.client("bedrock-runtime", region_name=REGION)
+        return session.client("bedrock", region_name=REGION)
     except Exception as e:
         st.warning(f"Error creating Bedrock client: {e}")
         return None
