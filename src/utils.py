@@ -152,6 +152,72 @@ def get_qclient(idc_id_token):
         return None
 
 
+def get_queue_chain(prompt_input, conversation_id, parent_message_id, token):
+    """
+    Invoke the Amazon Q chat_sync API and format the response for the UI.
+    """
+    st.warning("Attempting to invoke Amazon Q chat_sync API.")
+    try:
+        # List available Bedrock models
+        available_models = list_available_bedrock_models()
+        st.warning("Available Bedrock Models:")
+        for model in available_models:
+            st.warning(f"Model ID: {model['modelId']}, Provider: {model['providerName']}, Model Name: {model['modelName']}")
+
+        amazon_q = get_qclient(token)
+        if not amazon_q:
+            st.warning("Failed to create Amazon Q client.")
+            return None
+
+        if conversation_id:
+            answer = amazon_q.chat_sync(
+                applicationId=AMAZON_Q_APP_ID,
+                userMessage=prompt_input,
+                conversationId=conversation_id,
+                parentMessageId=parent_message_id,
+            )
+        else:
+            answer = amazon_q.chat_sync(
+                applicationId=AMAZON_Q_APP_ID, userMessage=prompt_input
+            )
+
+        system_message = answer.get("systemMessage", "")
+        conversation_id = answer.get("conversationId", "")
+        parent_message_id = answer.get("systemMessageId", "")
+        result = {
+            "answer": system_message,
+            "conversationId": conversation_id,
+            "parentMessageId": parent_message_id,
+        }
+
+        if "sourceAttributions" in answer:
+            attributions = answer["sourceAttributions"]
+            valid_attributions = []
+
+            for attr in attributions:
+                title = attr.get("title", "")
+                url = attr.get("url", "")
+                citation_number = attr.get("citationNumber", "")
+                attribution_text = []
+                if citation_number:
+                    attribution_text.append(f"[{citation_number}]")
+                if title:
+                    attribution_text.append(f"Title: {title}")
+                if url:
+                    attribution_text.append(f", URL: {url}")
+
+                valid_attributions.append("".join(attribution_text))
+
+            result["references"] = "\n\n".join(valid_attributions)
+
+        st.warning(f"Amazon Q chat_sync API invoked successfully. Response: {result}")
+        return result
+
+    except Exception as e:
+        st.warning(f"Error invoking Amazon Q chat_sync API: {e}")
+        return None
+
+
 def get_bedrock_client(service="bedrock-runtime"):
     """
     Create a Bedrock or Bedrock Runtime client to use AWS Bedrock services.
