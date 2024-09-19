@@ -22,6 +22,20 @@ IDC_APPLICATION_ID = None
 AMAZON_Q_APP_ID = None
 OAUTH_CONFIG = {}
 
+# JWT decoder function
+def decode_jwt(token):
+    """
+    Decode a JWT token without verifying the signature.
+    """
+    logger.info("Decoding JWT token.")
+    try:
+        decoded_token = jwt.decode(token, options={"verify_signature": False})
+        logger.info(f"JWT decoded successfully: {decoded_token}")
+        return decoded_token
+    except Exception as e:
+        logger.error(f"Error decoding JWT: {e}")
+        return None
+
 # Retrieve configuration from AppConfig
 def retrieve_config_from_agent():
     global IAM_ROLE, REGION, OAUTH_CONFIG, IDC_APPLICATION_ID, AMAZON_Q_APP_ID
