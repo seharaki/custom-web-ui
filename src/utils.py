@@ -1,11 +1,10 @@
 import datetime
 import logging
 import os
-
 import boto3
 import jwt
-import streamlit as st
 import urllib3
+import streamlit as st
 from streamlit_oauth import OAuth2Component
 
 logger = logging.getLogger()
@@ -20,25 +19,20 @@ REGION = None
 IDC_APPLICATION_ID = None
 OAUTH_CONFIG = {}
 
-
 def retrieve_config_from_agent():
     """
     Retrieve the configuration from the agent
     """
     global IAM_ROLE, REGION, IDC_APPLICATION_ID, AMAZON_Q_APP_ID, OAUTH_CONFIG
-    http = urllib3.PoolManager()
-    config = http.request(
+    config = urllib3.request(
         "GET",
         f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}",
-    ).data.decode('utf-8')
-    config_json = json.loads(config)
-    IAM_ROLE = config_json["IamRoleArn"]
-    REGION = config_json["Region"]
-    IDC_APPLICATION_ID = config_json["IdcApplicationArn"]
-    AMAZON_Q_APP_ID = config_json["AmazonQAppId"]
-    OAUTH_CONFIG = config_json["OAuthConfig"]
-    st.session_state.region = REGION  # Storing region in session state
-
+    ).json()
+    IAM_ROLE = config["IamRoleArn"]
+    REGION = config["Region"]
+    IDC_APPLICATION_ID = config["IdcApplicationArn"]
+    AMAZON_Q_APP_ID = config["AmazonQAppId"]
+    OAUTH_CONFIG = config["OAuthConfig"]
 
 def configure_oauth_component():
     """
@@ -54,32 +48,29 @@ def configure_oauth_component():
         client_id, None, authorize_url, token_url, refresh_token_url, revoke_token_url
     )
 
-
 def refresh_iam_oidc_token(refresh_token):
     """
     Refresh the IAM OIDC token using the refresh token retrieved from Cognito
     """
     client = boto3.client("sso-oidc", region_name=REGION)
-    response = client.create_token(
+    response = client.create_token_with_iam(
         clientId=IDC_APPLICATION_ID,
         grantType="refresh_token",
         refreshToken=refresh_token,
     )
     return response
 
-
 def get_iam_oidc_token(id_token):
     """
     Get the IAM OIDC token using the ID token retrieved from Cognito
     """
     client = boto3.client("sso-oidc", region_name=REGION)
-    response = client.create_token(
+    response = client.create_token_with_iam(
         clientId=IDC_APPLICATION_ID,
         grantType="urn:ietf:params:oauth:grant-type:jwt-bearer",
         assertion=id_token,
     )
     return response
-
 
 def assume_role_with_token(iam_token):
     """
@@ -99,8 +90,6 @@ def assume_role_with_token(iam_token):
     )
     st.session_state.aws_credentials = response["Credentials"]
 
-
-# This method creates the Q client
 def get_qclient(idc_id_token: str):
     """
     Create the Q client using the identity-aware AWS Session.
@@ -118,11 +107,7 @@ def get_qclient(idc_id_token: str):
     amazon_q = session.client("qbusiness", REGION)
     return amazon_q
 
-
-# This method invokes chat_sync API and formats the response for the UI
-def get_queue_chain(
-    prompt_input, conversation_id, parent_message_id, token
-):
+def get_queue_chain(prompt_input, conversation_id, parent_message_id, token):
     """
     This method is used to get the answer from the queue chain.
     """
@@ -152,6 +137,8 @@ def get_queue_chain(
         attributions = answer["sourceAttributions"]
         valid_attributions = []
 
+        # Generate the answer references extracting citation number,
+        # the document title, and if present, the document URL
         for attr in attributions:
             title = attr.get("title", "")
             url = attr.get("url", "")
@@ -169,6 +156,7 @@ def get_queue_chain(
         concatenated_attributions = "\n\n".join(valid_attributions)
         result["references"] = concatenated_attributions
 
+        # Process the citation numbers and insert them into the system message
         citations = {}
         for attr in answer["sourceAttributions"]:
             for segment in attr["textMessageSegments"]:
@@ -188,34 +176,23 @@ def get_queue_chain(
 
     return result
 
+# Bedrock functionality to fetch from knowledge base
+def ask_bedrock_knowledgebase(prompt, token):
+    """
+    Get the answer from the Bedrock Knowledge Base using retrieve_and_generate API.
+    """
+    bedrock_client = boto3.client("bedrock-runtime", region_name=REGION)
+    knowledge_base_id = "<your_knowledge_base_id>"  # Set the correct knowledge base ID
+    bedrock_model_arn = "<bedrock_model_arn>"  # Set the correct Bedrock model ARN
 
-# This method fetches the Bedrock response using a knowledge base.
-def get_bedrock_response(prompt, knowledge_base_id):
-    """
-    Send a prompt to Bedrock Claude LLM using the specified Knowledge Base.
-    """
-    logger.info(f"Fetching response from Bedrock for prompt: {prompt}")
-    
-    try:
-        # Creating Bedrock client
-        bedrock_client = boto3.client("bedrock-runtime", region_name=st.session_state.region)
-        
-        # Call to Bedrock
-        response = bedrock_client.retrieve_and_generate(
-            input={"text": prompt},
-            retrieveAndGenerateConfiguration={
-                "type": "KNOWLEDGE_BASE",
-                "knowledgeBaseConfiguration": {
-                    "knowledgeBaseId": knowledge_base_id,
-                    "modelArn": f"arn:aws:bedrock:{st.session_state.region}::foundation-model/amazon.titan-embed-text-v1"
-                }
-            },
-        )
-        # Extract the output text
-        output_text = response["output"]["text"]
-        logger.info(f"Bedrock response: {output_text}")
-        return {"answer": output_text}
-    
-    except Exception as e:
-        logger.error(f"Error fetching response from Bedrock: {e}")
-        return {"answer": "Error: Failed to retrieve response from Bedrock Claude LLM."}
+    response = bedrock_client.retrieve_and_generate(
+        input={"text": prompt},
+        retrieveAndGenerateConfiguration={
+            "type": "KNOWLEDGE_BASE",
+            "knowledgeBaseConfiguration": {
+                "knowledgeBaseId": knowledge_base_id,
+                "modelArn": bedrock_model_arn
+            }
+        }
+    )
+    return response["output"]["text"]
