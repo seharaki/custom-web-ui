@@ -3,7 +3,6 @@ import logging
 import os
 import boto3
 import jwt
-import urllib3
 import streamlit as st
 from streamlit_oauth import OAuth2Component
 
