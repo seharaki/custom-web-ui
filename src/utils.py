@@ -6,7 +6,6 @@ import jwt
 import urllib3
 import streamlit as st
 from streamlit_oauth import OAuth2Component
-import json
 
 logger = logging.getLogger()
 
@@ -20,7 +19,6 @@ REGION = None
 IDC_APPLICATION_ID = None
 OAUTH_CONFIG = {}
 
-# Correct urllib3 usage, since it was there before
 http = urllib3.PoolManager()
 
 def retrieve_config_from_agent():
@@ -60,7 +58,7 @@ def refresh_iam_oidc_token(refresh_token):
     Refresh the IAM OIDC token using the refresh token retrieved from Cognito
     """
     client = boto3.client("sso-oidc", region_name=REGION)
-    response = client.create_token_with_iam(
+    response = client.create_token(
         clientId=IDC_APPLICATION_ID,
         grantType="refresh_token",
         refreshToken=refresh_token,
@@ -72,7 +70,7 @@ def get_iam_oidc_token(id_token):
     Get the IAM OIDC token using the ID token retrieved from Cognito
     """
     client = boto3.client("sso-oidc", region_name=REGION)
-    response = client.create_token_with_iam(
+    response = client.create_token(
         clientId=IDC_APPLICATION_ID,
         grantType="urn:ietf:params:oauth:grant-type:jwt-bearer",
         assertion=id_token,
