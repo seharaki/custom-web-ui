@@ -3,6 +3,7 @@ import logging
 import os
 import boto3
 import jwt
+import urllib3
 import streamlit as st
 from streamlit_oauth import OAuth2Component
 
@@ -18,15 +19,21 @@ REGION = None
 IDC_APPLICATION_ID = None
 OAUTH_CONFIG = {}
 
+# Correct urllib3 usage, since it was there before
+http = urllib3.PoolManager()
+
 def retrieve_config_from_agent():
     """
     Retrieve the configuration from the agent
     """
     global IAM_ROLE, REGION, IDC_APPLICATION_ID, AMAZON_Q_APP_ID, OAUTH_CONFIG
-    config = urllib3.request(
-        "GET",
-        f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}",
-    ).json()
+    url = f"http://localhost:2772/applications/{APPCONFIG_APP_NAME}/environments/{APPCONFIG_ENV_NAME}/configurations/{APPCONFIG_CONF_NAME}"
+    response = http.request('GET', url)
+    config = response.data.decode('utf-8')
+    
+    # Assuming the config is JSON-encoded
+    config = json.loads(config)
+
     IAM_ROLE = config["IamRoleArn"]
     REGION = config["Region"]
     IDC_APPLICATION_ID = config["IdcApplicationArn"]
